@@ -16,15 +16,15 @@ A complete, buildable Product & System Specification in `.scratch/scrum-poker/sp
 
 <!-- the index: one line per closed ticket, enough to judge relevance, then zoom the link for the detail the ticket holds -->
 
-- [Zero-Auth Session & Room State Lifecycle](issues/01-zero-auth-room-lifecycle.md): Human-readable slugs + 6-char codes, socket-bound facilitator promotion on disconnect, localStorage participant IDs for seamless reconnects, and pure in-memory Tokio room actors.
-- [Rust Real-time WebSocket Protocol & State Machine](issues/02-rust-websocket-state-machine.md): 7-phase estimation state machine in Tokio/Axum, state-dependent serializer projections enforcing server-side reveal gate, and tagged JSON enum contracts.
-- [Story Doctor & Point Reference Library Specs](issues/04-story-doctor-and-reference-library.md): INVEST audit scoring with non-blocking review banner, 3-axis complexity summary (Data/APIs/Blast Radius), 4-category interactive edge-case checklist, and customizable sidebar benchmark cards.
-- [Divergence Analyzer & Vertical Slicer Prompt Contracts](issues/06-divergence-analyzer-and-vertical-slicer.md): 5-category vote classifier, strictly neutral divergence axis synthesis, supportive outlier spotlight, and SPIDR-based vertical slicing with one-click queue insertion.
-- [Frontend UX State Flows & Wireframe Specifications](issues/08-frontend-ux-and-wireframes.md): 3-column Hybrid Command Center + Poker Arena layout, 3D card reveal animations, and responsive desktop/tablet/mobile flows.
-- [Standalone Story Management & Ingestion/Export Formats](issues/10-standalone-story-management.md): Multi-format parser (Markdown/CSV/JSON) with visual staging preview, 1-click Markdown clipboard export, and PostgreSQL historical embedding indexing.
-- [Reference Matcher & Embedding Architecture](issues/05-reference-matcher-and-embeddings.md): 1536-dim pgvector cosine similarity index, similarity-weighted Fibonacci mapping, Point Reference Library auto-seeding, and background reveal gate confinement.
-- [Team Estimation Profile & Rolling Calibration Model](issues/07-team-estimation-profile-and-calibration.md): Strict privacy boundary excluding individual metrics, 4 core health metrics (Velocity Band, Consensus Rate, Slicing Rate, Category Bias), and 50-story decaying calibration window.
-- [Spec Synthesis & Hand-off Document Assembly](issues/09-spec-synthesis-and-handoff.md): Synthesis of canonical Product & System Specification in `.scratch/scrum-poker/spec.md` ready for implementation.
+- [Zero-Auth Session & Room State Lifecycle](decisions/01-zero-auth-room-lifecycle.md): Human-readable slugs + 6-char codes, socket-bound facilitator promotion on disconnect, localStorage participant IDs for seamless reconnects, and pure in-memory Tokio room actors.
+- [Rust Real-time WebSocket Protocol & State Machine](decisions/02-rust-websocket-state-machine.md): 7-phase estimation state machine in Tokio/Axum, state-dependent serializer projections enforcing server-side reveal gate, and tagged JSON enum contracts.
+- [Story Doctor & Point Reference Library Specs](decisions/04-story-doctor-and-reference-library.md): INVEST audit scoring with non-blocking review banner, 3-axis complexity summary (Data/APIs/Blast Radius), 4-category interactive edge-case checklist, and customizable sidebar benchmark cards.
+- [Divergence Analyzer & Vertical Slicer Prompt Contracts](decisions/06-divergence-analyzer-and-vertical-slicer.md): 5-category vote classifier, strictly neutral divergence axis synthesis, supportive outlier spotlight, and SPIDR-based vertical slicing with one-click queue insertion.
+- [Frontend UX State Flows & Wireframe Specifications](decisions/08-frontend-ux-and-wireframes.md): 3-column Hybrid Command Center + Poker Arena layout, 3D card reveal animations, and responsive desktop/tablet/mobile flows.
+- [Standalone Story Management & Ingestion/Export Formats](decisions/10-standalone-story-management.md): Multi-format parser (Markdown/CSV/JSON) with visual staging preview, 1-click Markdown clipboard export, and PostgreSQL historical embedding indexing.
+- [Reference Matcher & Embedding Architecture](decisions/05-reference-matcher-and-embeddings.md): 1536-dim pgvector cosine similarity index, similarity-weighted Fibonacci mapping, Point Reference Library auto-seeding, and background reveal gate confinement.
+- [Team Estimation Profile & Rolling Calibration Model](decisions/07-team-estimation-profile-and-calibration.md): Strict privacy boundary excluding individual metrics, 4 core health metrics (Velocity Band, Consensus Rate, Slicing Rate, Category Bias), and 50-story decaying calibration window.
+- [Spec Synthesis & Hand-off Document Assembly](decisions/09-spec-synthesis-and-handoff.md): Synthesis of canonical Product & System Specification in `.scratch/scrum-poker/spec.md` ready for implementation.
 
 ## Not yet specified
 
@@ -38,7 +38,7 @@ A complete, buildable Product & System Specification in `.scratch/scrum-poker/sp
 
 <!-- see "Out of scope": work ruled beyond the destination; closed, never graduates -->
 
-- [Linear Integration & API Key Handling in No-Auth Mode](issues/03-linear-sync-contract.md): Ruled out of scope; the application is designed to be fully standalone with no dependencies on Linear, Jira, or third-party issue trackers.
+- [Linear Integration & API Key Handling in No-Auth Mode](decisions/03-linear-sync-contract.md): Ruled out of scope; the application is designed to be fully standalone with no dependencies on Linear, Jira, or third-party issue trackers.
 - Individual developer performance metrics / velocity leaderboards (strictly omitted to preserve team psychological safety).
 - Autonomous AI voting (AI casting story points or participating as an estimator).
 - Enterprise SSO / centralized user directory accounts (ruled out by zero-auth requirement).
