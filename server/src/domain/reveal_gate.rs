@@ -22,6 +22,9 @@ pub struct RoomSnapshotData {
     pub phase: EstimationPhase,
     pub round_number: u32,
     pub active_story: Option<Story>,
+    pub backlog: Vec<Story>,
+    pub active_tracker_provider: Option<String>,
+    pub tracker_connected: bool,
     pub participants: Vec<ParticipantProjection>,
     pub facilitator_id: String,
     pub consensus: Option<ConsensusSummary>,
@@ -89,12 +92,17 @@ pub fn project_room_state(state: &RoomState, viewer_id: Option<&str>) -> RoomSta
 
     participants.sort_by(|a, b| a.nickname.to_lowercase().cmp(&b.nickname.to_lowercase()));
 
+    let tracker_connected = state.active_tracker_provider.is_some();
+
     let data = RoomSnapshotData {
         slug: state.slug.clone(),
         short_code: state.short_code.clone(),
         phase: state.phase,
         round_number: state.round_number,
         active_story: state.active_story.clone(),
+        backlog: state.backlog.clone(),
+        active_tracker_provider: state.active_tracker_provider.clone(),
+        tracker_connected,
         participants,
         facilitator_id: state.facilitator_id.clone(),
         consensus,

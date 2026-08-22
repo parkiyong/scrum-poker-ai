@@ -50,12 +50,12 @@ async fn test_room_lifecycle_and_state_machine() {
     tx.send(RoomCommand::ClientMsg {
         participant_id: "p1".to_string(),
         command: ClientCommand::SelectStory {
-            story: Some(Story {
-                id: "s1".to_string(),
-                title: "Test story".to_string(),
-                description: "Description".to_string(),
-                acceptance_criteria: vec!["AC1".to_string()],
-            }),
+            story: Some(Story::new(
+                "s1",
+                "Test story",
+                "Description",
+                vec!["AC1".to_string()],
+            )),
         },
         reply: None,
     })

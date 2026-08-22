@@ -1,5 +1,10 @@
 # Agent Instructions
 
+## Branch Policy
+
+* **Read-Only `main` Branch**: The `main` branch is strictly **read-only**. Agents and contributors must never commit directly to `main`. Always create and work on dedicated feature or fix branches (e.g., `feat/<issue-number>-<short-description>`, `fix/<issue-number>-<short-description>`).
+* **Sync Before Branching**: Always pull the latest `main` branch from `origin` (e.g., `git checkout main && git pull origin main` or `git fetch origin main`) before branching out or creating a git worktree.
+
 ## Agent skills
 
 ### Issue tracker
@@ -63,4 +68,5 @@ Significant technical decisions and trade-offs are documented under [`.okf/decis
 ### 4. Contributing & Repository Health Standards
 
 * [`CONTRIBUTING.md`](CONTRIBUTING.md): Outlines the TDD (Red-Green-Refactor) workflow, conventional commit formatting, and the **Two-Axis PR Review Checklist** (Axis 1: Code Quality & Lints; Axis 2: Spec & Reveal Gate Invariant Adherence).
+* **Branch Policy**: The `main` branch is strictly **read-only**. Always pull the latest `origin/main` before branching out or creating a worktree, and never commit directly to `main`.
 * All agents and contributors must strictly enforce domain terms from [`CONTEXT.md`](CONTEXT.md) (*Facilitator*, *Estimator*, *Observer*, *Story*, *Deck*, *Reveal Gate*).

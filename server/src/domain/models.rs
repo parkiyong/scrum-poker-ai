@@ -24,6 +24,35 @@ pub struct Story {
     pub title: String,
     pub description: String,
     pub acceptance_criteria: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub key: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub url: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tracker_provider: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub external_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub points: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+}
+
+impl Story {
+    pub fn new(id: impl Into<String>, title: impl Into<String>, description: impl Into<String>, acceptance_criteria: Vec<String>) -> Self {
+        Self {
+            id: id.into(),
+            title: title.into(),
+            description: description.into(),
+            acceptance_criteria,
+            key: None,
+            url: None,
+            tracker_provider: None,
+            external_id: None,
+            points: None,
+            status: Some("Ready".to_string()),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -65,6 +94,8 @@ pub struct RoomState {
     pub phase: EstimationPhase,
     pub round_number: u32,
     pub active_story: Option<Story>,
+    pub backlog: Vec<Story>,
+    pub active_tracker_provider: Option<String>,
     pub participants: HashMap<String, Participant>,
     pub facilitator_id: String,
 }
@@ -77,6 +108,8 @@ impl RoomState {
             phase: EstimationPhase::Idle,
             round_number: 1,
             active_story: None,
+            backlog: Vec::new(),
+            active_tracker_provider: None,
             participants: HashMap::new(),
             facilitator_id: String::new(),
         }

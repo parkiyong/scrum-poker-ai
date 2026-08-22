@@ -1,5 +1,6 @@
 use crate::domain::models::{ConsensusSummary, Role, Story};
 use crate::domain::reveal_gate::RoomSnapshotData;
+use crate::domain::tracker::{ConnectionPreview, StorySlice, TrackerConfig, TrackerQuery};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -15,6 +16,42 @@ pub enum ClientCommand {
     },
     SelectStory {
         story: Option<Story>,
+    },
+    SelectStoryById {
+        story_id: String,
+    },
+    ConnectTracker {
+        config: TrackerConfig,
+    },
+    DisconnectTracker,
+    TestTrackerConnection {
+        config: TrackerConfig,
+    },
+    FetchBacklog {
+        #[serde(default)]
+        query: TrackerQuery,
+    },
+    ImportBacklog {
+        stories: Vec<Story>,
+    },
+    ImportMarkdown {
+        raw_markdown: String,
+    },
+    SyncEstimateToTracker {
+        story_id: String,
+        points: u32,
+        #[serde(default)]
+        post_comment: bool,
+    },
+    PushStorySlices {
+        parent_id: String,
+        slices: Vec<StorySlice>,
+    },
+    ReorderBacklog {
+        story_ids: Vec<String>,
+    },
+    RemoveStoryFromBacklog {
+        story_id: String,
     },
     StartVoting,
     CastVote {
@@ -68,6 +105,30 @@ pub enum ServerEvent {
         story_id: Option<String>,
         points: String,
     },
+    TrackerConnected {
+        provider: String,
+    },
+    TrackerDisconnected,
+    TrackerConnectionTested {
+        preview: ConnectionPreview,
+    },
+    BacklogUpdated {
+        backlog: Vec<Story>,
+    },
+    EstimateSynced {
+        story_id: String,
+        external_id: String,
+        points: u32,
+        success: bool,
+        message: Option<String>,
+    },
+    SlicesPushed {
+        parent_id: String,
+        created_stories: Vec<Story>,
+    },
+    TrackerError {
+        message: String,
+    },
     RoleUpdated {
         participant_id: String,
         role: Role,
@@ -80,3 +141,4 @@ pub enum ServerEvent {
     },
     Pong,
 }
+

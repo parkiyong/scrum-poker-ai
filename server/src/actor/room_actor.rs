@@ -1,9 +1,12 @@
-use crate::domain::models::{EstimationPhase, Participant, Role, RoomState};
+use crate::domain::markdown_parser::parse_markdown_backlog;
+use crate::domain::models::{EstimationPhase, Participant, Role, RoomState, Story};
 use crate::domain::protocol::{ClientCommand, ServerEvent};
 use crate::domain::reveal_gate::{project_room_state, RoomSnapshotData};
+use crate::domain::tracker::{create_adapter, IssueTrackerAdapter};
 use std::collections::HashMap;
 use tokio::sync::{broadcast, mpsc, oneshot};
 use tracing::info;
+use uuid::Uuid;
 
 #[derive(Debug)]
 pub enum RoomCommand {
@@ -24,6 +27,7 @@ pub enum RoomCommand {
 pub struct RoomActor {
     pub state: RoomState,
     pub event_tx: broadcast::Sender<ServerEvent>,
+    pub tracker_adapter: Option<Box<dyn IssueTrackerAdapter>>,
 }
 
 impl RoomActor {
@@ -31,7 +35,14 @@ impl RoomActor {
         Self {
             state: RoomState::new(slug, short_code),
             event_tx,
+            tracker_adapter: None,
         }
+    }
+
+    pub fn with_tracker_adapter(mut self, adapter: Box<dyn IssueTrackerAdapter>) -> Self {
+        self.state.active_tracker_provider = Some(adapter.provider_name().to_string());
+        self.tracker_adapter = Some(adapter);
+        self
     }
 
     pub async fn run(mut self, mut rx: mpsc::Receiver<RoomCommand>) {
@@ -42,7 +53,7 @@ impl RoomActor {
                     command,
                     reply,
                 } => {
-                    let res = self.handle_client_command(&participant_id, command);
+                    let res = self.handle_client_command(&participant_id, command).await;
                     if let Some(r) = reply {
                         let _ = r.send(res);
                     }
@@ -61,7 +72,7 @@ impl RoomActor {
         }
     }
 
-    fn handle_client_command(
+    async fn handle_client_command(
         &mut self,
         sender_id: &str,
         command: ClientCommand,
@@ -128,6 +139,290 @@ impl RoomActor {
                 self.state.active_story = story;
                 self.reset_votes();
                 self.state.phase = EstimationPhase::Idle;
+                self.broadcast_snapshot();
+                self.get_participant(sender_id)
+            }
+
+            ClientCommand::SelectStoryById { story_id } => {
+                if let Some(story) = self
+                    .state
+                    .backlog
+                    .iter()
+                    .find(|s| s.id == story_id || s.key.as_deref() == Some(&story_id))
+                    .cloned()
+                {
+                    self.state.active_story = Some(story);
+                    self.reset_votes();
+                    self.state.phase = EstimationPhase::Idle;
+                    self.broadcast_snapshot();
+                }
+                self.get_participant(sender_id)
+            }
+
+            ClientCommand::ConnectTracker { config } => {
+                let adapter = create_adapter(config);
+                match adapter.test_connection().await {
+                    Ok(preview) => {
+                        let prov_name = adapter.provider_name().to_string();
+                        self.state.active_tracker_provider = Some(prov_name.clone());
+                        self.tracker_adapter = Some(adapter);
+                        let _ = self.event_tx.send(ServerEvent::TrackerConnected {
+                            provider: prov_name,
+                        });
+                        let _ = self.event_tx.send(ServerEvent::TrackerConnectionTested {
+                            preview,
+                        });
+                        self.broadcast_snapshot();
+                    }
+                    Err(err) => {
+                        let _ = self.event_tx.send(ServerEvent::TrackerError {
+                            message: err.to_string(),
+                        });
+                    }
+                }
+                self.get_participant(sender_id)
+            }
+
+            ClientCommand::DisconnectTracker => {
+                self.tracker_adapter = None;
+                self.state.active_tracker_provider = None;
+                let _ = self.event_tx.send(ServerEvent::TrackerDisconnected);
+                self.broadcast_snapshot();
+                self.get_participant(sender_id)
+            }
+
+            ClientCommand::TestTrackerConnection { config } => {
+                let adapter = create_adapter(config);
+                match adapter.test_connection().await {
+                    Ok(preview) => {
+                        let _ = self.event_tx.send(ServerEvent::TrackerConnectionTested {
+                            preview,
+                        });
+                    }
+                    Err(err) => {
+                        let _ = self.event_tx.send(ServerEvent::TrackerError {
+                            message: err.to_string(),
+                        });
+                    }
+                }
+                self.get_participant(sender_id)
+            }
+
+            ClientCommand::FetchBacklog { query } => {
+                if let Some(ref adapter) = self.tracker_adapter {
+                    match adapter.fetch_backlog(&query).await {
+                        Ok(ext_stories) => {
+                            let prov_name = adapter.provider_name().to_string();
+                            for ext in ext_stories {
+                                if !self.state.backlog.iter().any(|s| {
+                                    s.external_id.as_deref() == Some(&ext.id)
+                                        || (s.key.as_deref() == Some(&ext.key) && !ext.key.is_empty())
+                                }) {
+                                    self.state.backlog.push(Story {
+                                        id: format!("story-{}", Uuid::new_v4()),
+                                        title: ext.title,
+                                        description: ext.description,
+                                        acceptance_criteria: ext.acceptance_criteria,
+                                        key: Some(ext.key),
+                                        url: ext.url,
+                                        tracker_provider: Some(prov_name.clone()),
+                                        external_id: Some(ext.id),
+                                        points: ext.current_estimate.map(|pts| pts.to_string()),
+                                        status: ext.status.or(Some("Ready".to_string())),
+                                    });
+                                }
+                            }
+                            let _ = self.event_tx.send(ServerEvent::BacklogUpdated {
+                                backlog: self.state.backlog.clone(),
+                            });
+                            self.broadcast_snapshot();
+                        }
+                        Err(err) => {
+                            let _ = self.event_tx.send(ServerEvent::TrackerError {
+                                message: err.to_string(),
+                            });
+                        }
+                    }
+                } else {
+                    let _ = self.event_tx.send(ServerEvent::TrackerError {
+                        message: "No active issue tracker connected".to_string(),
+                    });
+                }
+                self.get_participant(sender_id)
+            }
+
+            ClientCommand::ImportBacklog { stories } => {
+                self.state.backlog.extend(stories);
+                let _ = self.event_tx.send(ServerEvent::BacklogUpdated {
+                    backlog: self.state.backlog.clone(),
+                });
+                self.broadcast_snapshot();
+                self.get_participant(sender_id)
+            }
+
+            ClientCommand::ImportMarkdown { raw_markdown } => {
+                let parsed = parse_markdown_backlog(&raw_markdown);
+                self.state.backlog.extend(parsed);
+                let _ = self.event_tx.send(ServerEvent::BacklogUpdated {
+                    backlog: self.state.backlog.clone(),
+                });
+                self.broadcast_snapshot();
+                self.get_participant(sender_id)
+            }
+
+            ClientCommand::SyncEstimateToTracker {
+                story_id,
+                points,
+                post_comment,
+            } => {
+                let mut target_ext_id = None;
+                let mut target_story_id = story_id.clone();
+
+                for story in &mut self.state.backlog {
+                    if story.id == story_id || story.key.as_deref() == Some(&story_id) {
+                        story.points = Some(points.to_string());
+                        story.status = Some("Estimated".to_string());
+                        target_ext_id = story.external_id.clone().or_else(|| story.key.clone());
+                        target_story_id = story.id.clone();
+                    }
+                }
+
+                if let Some(ref mut active) = self.state.active_story {
+                    if active.id == story_id || active.key.as_deref() == Some(&story_id) {
+                        active.points = Some(points.to_string());
+                        active.status = Some("Estimated".to_string());
+                        if target_ext_id.is_none() {
+                            target_ext_id = active.external_id.clone().or_else(|| active.key.clone());
+                        }
+                        target_story_id = active.id.clone();
+                    }
+                }
+
+                if let (Some(ref adapter), Some(ext_id)) = (&self.tracker_adapter, target_ext_id.as_deref()) {
+                    match adapter.sync_estimate(ext_id, points).await {
+                        Ok(()) => {
+                            if post_comment {
+                                let comment = format!("⚡ Scrum Poker Consensus: {} story points.", points);
+                                let _ = adapter.post_summary_comment(ext_id, &comment).await;
+                            }
+
+                            let _ = self.event_tx.send(ServerEvent::EstimateSynced {
+                                story_id: target_story_id.clone(),
+                                external_id: ext_id.to_string(),
+                                points,
+                                success: true,
+                                message: None,
+                            });
+                        }
+                        Err(err) => {
+                            let _ = self.event_tx.send(ServerEvent::EstimateSynced {
+                                story_id: target_story_id.clone(),
+                                external_id: ext_id.to_string(),
+                                points,
+                                success: false,
+                                message: Some(err.to_string()),
+                            });
+                        }
+                    }
+                } else {
+                    let _ = self.event_tx.send(ServerEvent::EstimateSynced {
+                        story_id: target_story_id.clone(),
+                        external_id: target_ext_id.unwrap_or_default(),
+                        points,
+                        success: true,
+                        message: Some("Updated in local room backlog".to_string()),
+                    });
+                }
+
+                let _ = self.event_tx.send(ServerEvent::BacklogUpdated {
+                    backlog: self.state.backlog.clone(),
+                });
+                self.broadcast_snapshot();
+                self.get_participant(sender_id)
+            }
+
+            ClientCommand::PushStorySlices { parent_id, slices } => {
+                let mut created_stories = Vec::new();
+                if let Some(ref adapter) = self.tracker_adapter {
+                    match adapter.push_slices(&parent_id, &slices).await {
+                        Ok(ext_slices) => {
+                            let prov_name = adapter.provider_name().to_string();
+                            for ext in ext_slices {
+                                let s = Story {
+                                    id: format!("story-{}", Uuid::new_v4()),
+                                    title: ext.title,
+                                    description: ext.description,
+                                    acceptance_criteria: ext.acceptance_criteria,
+                                    key: Some(ext.key),
+                                    url: ext.url,
+                                    tracker_provider: Some(prov_name.clone()),
+                                    external_id: Some(ext.id),
+                                    points: ext.current_estimate.map(|p| p.to_string()),
+                                    status: Some("Ready".to_string()),
+                                };
+                                self.state.backlog.push(s.clone());
+                                created_stories.push(s);
+                            }
+                        }
+                        Err(err) => {
+                            let _ = self.event_tx.send(ServerEvent::TrackerError {
+                                message: err.to_string(),
+                            });
+                        }
+                    }
+                } else {
+                    for (i, slice) in slices.iter().enumerate() {
+                        let s = Story {
+                            id: format!("story-{}", Uuid::new_v4()),
+                            title: slice.title.clone(),
+                            description: slice.description.clone(),
+                            acceptance_criteria: slice.acceptance_criteria.clone(),
+                            key: Some(format!("{}-S{}", parent_id, i + 1)),
+                            url: None,
+                            tracker_provider: None,
+                            external_id: None,
+                            points: slice.estimated_points.map(|p| p.to_string()),
+                            status: Some("Ready".to_string()),
+                        };
+                        self.state.backlog.push(s.clone());
+                        created_stories.push(s);
+                    }
+                }
+
+                let _ = self.event_tx.send(ServerEvent::SlicesPushed {
+                    parent_id: parent_id.clone(),
+                    created_stories: created_stories.clone(),
+                });
+                let _ = self.event_tx.send(ServerEvent::BacklogUpdated {
+                    backlog: self.state.backlog.clone(),
+                });
+                self.broadcast_snapshot();
+                self.get_participant(sender_id)
+            }
+
+            ClientCommand::ReorderBacklog { story_ids } => {
+                let mut reordered = Vec::new();
+                for id in &story_ids {
+                    if let Some(pos) = self.state.backlog.iter().position(|s| &s.id == id) {
+                        reordered.push(self.state.backlog.remove(pos));
+                    }
+                }
+                // Append remaining items that weren't specified
+                reordered.append(&mut self.state.backlog);
+                self.state.backlog = reordered;
+
+                let _ = self.event_tx.send(ServerEvent::BacklogUpdated {
+                    backlog: self.state.backlog.clone(),
+                });
+                self.broadcast_snapshot();
+                self.get_participant(sender_id)
+            }
+
+            ClientCommand::RemoveStoryFromBacklog { story_id } => {
+                self.state.backlog.retain(|s| s.id != story_id && s.key.as_deref() != Some(&story_id));
+                let _ = self.event_tx.send(ServerEvent::BacklogUpdated {
+                    backlog: self.state.backlog.clone(),
+                });
                 self.broadcast_snapshot();
                 self.get_participant(sender_id)
             }
