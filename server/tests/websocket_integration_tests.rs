@@ -7,6 +7,22 @@ use tokio_tungstenite::connect_async;
 use tokio_tungstenite::tungstenite::Message;
 
 #[tokio::test]
+async fn test_api_create_room_returns_6_char_code() {
+    let registry = RoomRegistry::new();
+    let handle = registry.create_room().await;
+
+    assert_eq!(handle.slug.len(), 6);
+    assert_eq!(handle.slug, handle.short_code);
+    assert!(handle.slug.contains('-'));
+    let parts: Vec<&str> = handle.slug.split('-').collect();
+    assert_eq!(parts.len(), 2);
+    assert_eq!(parts[0].len(), 3);
+    assert_eq!(parts[1].len(), 2);
+    assert!(parts[0].chars().all(|c| c.is_ascii_uppercase()));
+    assert!(parts[1].chars().all(|c| c.is_ascii_digit()));
+}
+
+#[tokio::test]
 async fn test_websocket_join_vote_and_reveal_flow() {
     let registry = RoomRegistry::new();
     let app = create_router(registry);
@@ -20,7 +36,7 @@ async fn test_websocket_join_vote_and_reveal_flow() {
         axum::serve(listener, app).await.unwrap();
     });
 
-    let ws_url = format!("ws://127.0.0.1:{}/ws/rooms/swift-badger-42", addr.port());
+    let ws_url = format!("ws://127.0.0.1:{}/ws/rooms/SWB-42", addr.port());
 
     // 1. Client A (Facilitator) connects
     let (mut ws_a, _) = connect_async(&ws_url).await.expect("Failed to connect ws_a");
@@ -66,7 +82,6 @@ async fn test_websocket_join_vote_and_reveal_flow() {
         .unwrap();
 
     // 5. Read incoming messages on Client B to ensure Reveal Gate masks Client A's vote value
-    // Loop through events until we find snapshot during voting
     let mut got_masked_snapshot = false;
     for _ in 0..10 {
         if let Some(Ok(Message::Text(text))) = ws_b.next().await {
