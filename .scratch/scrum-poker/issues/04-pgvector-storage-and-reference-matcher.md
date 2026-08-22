@@ -8,6 +8,7 @@
 
 ## Acceptance criteria
 
+- [ ] Docker Compose service (`db` using `pgvector/pgvector:pg16`) provides zero-friction local database provisioning.
 - [ ] PostgreSQL migration creates `historical_stories` table with `embedding vector(1536)` column, IVFFlat index, and team namespace scoping.
 - [ ] Database seed script populates default benchmark stories across 1, 2, 3, 5, 8, and 13 point tiers.
 - [ ] Active story embedding is computed asynchronously during the unrevealed phase without blocking the room actor or leaking vector recommendations to clients.

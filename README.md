@@ -1,36 +1,68 @@
 # 🃏 Scrum Poker AI
 
-A real-time, zero-auth Planning Poker estimation platform featuring a high-performance **Rust (Tokio / Axum)** backend, **React 18 + TypeScript + Tailwind CSS** frontend, and a **server-enforced reveal gate** that eliminates cognitive anchoring bias.
+> A real-time, zero-auth Planning Poker estimation platform featuring a high-performance **Rust (Tokio / Axum)** backend, **React 18 + TypeScript + Tailwind CSS** frontend, and a **server-enforced reveal gate** that eliminates cognitive anchoring bias.
 
-📖 **[User Guide](USER_GUIDE.md)** | 🧠 **[OKF Knowledge Bundle](.okf/index.md)** | 🏛️ **[Architecture Decisions](.okf/decisions/index.md)**
+📖 [User Guide](USER_GUIDE.md) · 🛠️ [Developer Guide](DEVELOPER_GUIDE.md) · 🤝 [Contributing](CONTRIBUTING.md) · 🧠 [OKF Knowledge Bundle](.okf/index.md) · 🌐 [Product Spec](.scratch/scrum-poker/spec.md)
 
 ---
 
 ## ⚡ Highlights
 
 * **Zero-Auth Simplicity**: No accounts, passwords, or signup required. Join or create rooms instantly via memorable 6-character codes (e.g. `SWB-42`, `ZBE-55`).
-* **Server-Enforced Reveal Gate**: Votes are physically masked at the protocol level (`has_voted: bool`) until cards are formally revealed, preventing inspection via browser DevTools.
+* **Server-Enforced Reveal Gate**: Votes and AI baseline recommendations are physically masked at the protocol level (`has_voted: bool`) until cards are formally revealed, preventing inspection via browser DevTools.
 * **3D Felt Poker Arena**: Realistic central felt poker table with 3D flip card animations, consensus indicators, and outlier spread detection.
 * **Non-Voting Facilitator Support**: Scrum Masters and PMs can lead estimation rounds with full facilitator controls without being forced to vote or altering team quorum.
 * **Seamless Session Recovery**: Participants automatically reclaim their seat and voting state on page refresh through client-side `localStorage` caching.
 
 ---
 
+## 🏗️ System Architecture
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        React Web Client (SPA)                          │
+│   ┌──────────────────────┬──────────────────────┬───────────────────┐  │
+│   │  Left: Story Doctor  │ Center: Poker Arena  │ Right: AI Advisory│  │
+│   │  & INVEST Scorecard  │ & 3D Card Flipping   │ & Reference Deck  │  │
+│   └──────────────────────┴──────────────────────┴───────────────────┘  │
+└───────────────────────────────────▲────────────────────────────────────┘
+                                    │ WebSocket (JSON RPC)
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                       Rust Backend (Tokio / Axum)                      │
+│  ┌─────────────────────────┐ ┌──────────────────────────────────────┐  │
+│  │   In-Memory Room Actors │ │    AI Advisory Engine                │  │
+│  │   - 7-Phase State Mach. │ │    - Story Doctor (INVEST + Edge)    │  │
+│  │   - Reveal Gate Filter  │ │    - Divergence Analyzer (Spread)    │  │
+│  │   - Socket Reconnection │ │    - SPIDR Vertical Slicer           │  │
+│  └────────────┬────────────┘ └──────────────────┬───────────────────┘  │
+└───────────────┼─────────────────────────────────┼──────────────────────┘
+                │ Async Persistence               │ Nearest-Neighbor Vector Lookups
+┌───────────────▼─────────────────────────────────▼──────────────────────┐
+│                    PostgreSQL + pgvector Database                      │
+│   - historical_stories (1536-dim IVFFlat index, team_namespace)        │
+│   - team_estimation_profiles (velocity bands, calibration weights)     │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## 🚀 Quick Start
 
-### Option A: Standalone Mode (Single Web Server)
+### Prerequisites
+* **Rust**: `1.80+` (`cargo`)
+* **Node.js**: `v20+` & `npm`
+* **Docker & Docker Compose** (for PostgreSQL + `pgvector`)
 
+### 1. Database Setup (Docker Compose)
+
+Start the PostgreSQL + `pgvector` container for local development:
 ```bash
-# 1. Build the React client bundle
-cd client && npm run build && cd ..
-
-# 2. Start the Rust server
-cargo run --bin server
+docker compose up -d db
 ```
-Open **`http://localhost:3000`** in your browser.
 
-### Option B: Development Mode (Vite Hot-Reload)
+### 2. Run the Application
 
+#### Option A: Development Mode (Vite Hot-Reload)
 ```bash
 # Terminal 1: Backend WebSocket & REST server
 cargo run --bin server
@@ -38,7 +70,23 @@ cargo run --bin server
 # Terminal 2: Frontend with Vite hot-reloading
 cd client && npm run dev
 ```
-Open **`http://localhost:5173`** in your browser.
+Open **[http://localhost:5173](http://localhost:5173)** in your browser.
+
+#### Option B: Standalone Mode (Single Binary)
+```bash
+# 1. Build the React client bundle
+cd client && npm run build && cd ..
+
+# 2. Start the Rust server
+cargo run --bin server
+```
+Open **[http://localhost:3000](http://localhost:3000)** in your browser.
+
+#### Option C: Full Containerized Stack (Docker)
+```bash
+docker compose --profile full up --build
+```
+Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 
 ---
 
@@ -82,5 +130,25 @@ cd client && npm test
 │   └── decisions/        # Architectural Decision Records (ADRs)
 │
 ├── USER_GUIDE.md         # Comprehensive user & facilitator guide
+├── DEVELOPER_GUIDE.md    # Developer setup, architecture & testing guide
+├── CONTRIBUTING.md       # Contribution guidelines, TDD & PR review standards
 └── README.md             # Project overview & quick start
 ```
+
+---
+
+## 📚 Documentation Index
+
+* 📖 **[User Guide](USER_GUIDE.md)** — Step-by-step facilitator and estimator workflows, room code routing, and multi-user testing.
+* 🛠️ **[Developer Guide](DEVELOPER_GUIDE.md)** — Deep dive into system architecture, environment configuration, testing, and security invariants.
+* 🤝 **[Contributing Guidelines](CONTRIBUTING.md)** — Branching, commit conventions, TDD practices, and the Two-Axis review checklist.
+* 🧠 **[OKF Knowledge Bundle](.okf/index.md)** — Architectural decision records, domain definitions, and protocol specifications.
+* 🛡️ **[Security Policy](SECURITY.md)** — Vulnerability disclosure process and Server Reveal Gate security invariants.
+* 📋 **[Changelog](CHANGELOG.md)** — Release notes and milestone progress.
+* 📜 **[Code of Conduct](CODE_OF_CONDUCT.md)** — Community standards and enforcement guidelines.
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).

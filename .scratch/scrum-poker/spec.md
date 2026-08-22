@@ -191,6 +191,13 @@ CREATE TABLE team_estimation_profiles (
 );
 ```
 
+### 6.1 Local Database Environment & Docker
+The PostgreSQL instance with the `pgvector` extension is provisioned locally via `docker-compose.yml` (`pgvector/pgvector:pg16`):
+```bash
+docker compose up -d db
+```
+The database connection string defaults to `DATABASE_URL=postgres://postgres:postgres@localhost:5432/scrum_poker`.
+
 ---
 
 ## 7. Frontend UX & Wireframe Specifications
