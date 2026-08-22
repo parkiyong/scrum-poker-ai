@@ -1,0 +1,15 @@
+/target/
+Cargo.lock
+**/*.rs.bk
+
+# Node & Frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# IDE & OS
+.DS_Store
+.vscode/
+.idea/
+*.log

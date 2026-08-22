@@ -4,15 +4,15 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 ## Acceptance criteria
 
-- [ ] Zero-auth room creation generates a human-readable slug (e.g. `swift-badger-42`) and uppercase 6-char short code (`SWB-42`) without authentication or signup.
-- [ ] Socket that initiates room creation is assigned `Facilitator` role; subsequent joins default to `Estimator` (or `Observer`).
-- [ ] Participant joining records session identity (UUIDv4, nickname, avatar color, role) in `localStorage` and smoothly reclaims their seat and voting state on disconnect/refresh.
-- [ ] In-memory Tokio room actor manages the core estimation state transitions (`Idle` → `Voting` → `Revealed` → `Finalized`).
-- [ ] Server-enforced Reveal Gate: While in `Voting` state, the server JSON serializer emits only `has_voted: bool` for peers; actual card values are strictly withheld until the state transitions to `Revealed`.
-- [ ] Central poker arena displays participant avatar positions around the table, shows vote readiness indicators during voting, and triggers 3D flip reveal animations upon cards reveal.
-- [ ] Facilitator controls allow starting voting, revealing cards, resetting the round, or transferring facilitator authority.
-- [ ] Full automated test coverage verifying state machine transitions, reveal gate masking invariants, and reconnect handshakes.
+- [x] Zero-auth room creation generates a human-readable slug (e.g. `swift-badger-42`) and uppercase 6-char short code (`SWB-42`) without authentication or signup.
+- [x] Socket that initiates room creation is assigned `Facilitator` role; subsequent joins default to `Estimator` (or `Observer`).
+- [x] Participant joining records session identity (UUIDv4, nickname, avatar color, role) in `localStorage` and smoothly reclaims their seat and voting state on disconnect/refresh.
+- [x] In-memory Tokio room actor manages the core estimation state transitions (`Idle` → `Voting` → `Revealed` → `Finalized`).
+- [x] Server-enforced Reveal Gate: While in `Voting` state, the server JSON serializer emits only `has_voted: bool` for peers; actual card values are strictly withheld until the state transitions to `Revealed`.
+- [x] Central poker arena displays participant avatar positions around the table, shows vote readiness indicators during voting, and triggers 3D flip reveal animations upon cards reveal.
+- [x] Facilitator controls allow starting voting, revealing cards, resetting the round, or transferring facilitator authority.
+- [x] Full automated test coverage verifying state machine transitions, reveal gate masking invariants, and reconnect handshakes.
