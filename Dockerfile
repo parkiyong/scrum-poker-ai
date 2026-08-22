@@ -10,7 +10,7 @@ RUN npm run build
 FROM rust:1-slim AS server-builder
 WORKDIR /app
 RUN apt-get update && apt-get install -y pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
-COPY Cargo.toml Cargo.lock ./
+COPY Cargo.toml Cargo.lock* ./
 COPY server/ ./server/
 RUN cargo build --release --bin server
 
