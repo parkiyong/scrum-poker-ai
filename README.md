@@ -2,7 +2,7 @@
 
 A real-time, zero-auth Planning Poker estimation platform featuring a high-performance **Rust (Tokio / Axum)** backend, **React + TypeScript + Tailwind CSS** frontend, and a **server-enforced reveal gate**.
 
-📖 **[Read the Full User Guide](docs/USER_GUIDE.md)** for detailed workflows, role guides, and architecture explanations.
+📖 **[Read the Full User Guide](USER_GUIDE.md)** for detailed workflows, role guides, and architecture explanations.
 
 ---
 
@@ -62,6 +62,6 @@ cd client && npm test
 │   │   └── utils/        # localStorage session management
 │   └── src/__tests__/    # Vitest component and hook test suites
 │
-└── docs/
-    └── USER_GUIDE.md     # Complete User Guide
+├── USER_GUIDE.md         # Complete User Guide
+└── README.md             # Project overview & quick start
 ```
