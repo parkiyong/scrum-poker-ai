@@ -2,6 +2,8 @@
 name = "server"
 version = "0.1.0"
 edition = "2021"
+authors = ["Park Kiyong <470053+parkiyong@users.noreply.github.com>"]
+license = "MIT"
 
 [dependencies]
 tokio = { version = "1.40", features = ["full"] }
