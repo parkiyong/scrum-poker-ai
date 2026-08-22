@@ -31,7 +31,11 @@ export const SPIDRSliceModal: React.FC<SPIDRSliceModalProps> = ({
 
   if (!isOpen || !activeStory) return null;
 
-  const handleUpdateSlice = (index: number, field: keyof StorySlice, value: any) => {
+  const handleUpdateSlice = (
+    index: number,
+    field: keyof StorySlice,
+    value: string | number | string[] | undefined,
+  ) => {
     const next = [...slices];
     next[index] = { ...next[index], [field]: value };
     setSlices(next);
