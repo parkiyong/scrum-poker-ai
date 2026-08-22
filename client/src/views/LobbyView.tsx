@@ -18,13 +18,13 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
     if (joinInput.trim()) {
-      onJoinRoom(joinInput.trim());
+      onJoinRoom(joinInput.trim().toUpperCase());
     }
   };
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
-    onCreateRoom(customSlug.trim() || undefined);
+    onCreateRoom(customSlug.trim().toUpperCase() || undefined);
   };
 
   return (
@@ -51,7 +51,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
               Create New Room
             </h2>
             <p className="text-xs text-slate-400 mb-4">
-              Instantly spin up an ephemeral room with an auto-generated slug and 6-char mobile code.
+              Instantly spin up an ephemeral room with a 6-character room code (e.g. SWB-42).
             </p>
 
             <form onSubmit={handleCreate} className="space-y-3">
@@ -59,10 +59,10 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
                 <div className="space-y-2">
                   <input
                     type="text"
-                    placeholder="custom-room-name"
+                    placeholder="e.g. SPRINT-42"
                     value={customSlug}
-                    onChange={(e) => setCustomSlug(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-600 outline-none"
+                    onChange={(e) => setCustomSlug(e.target.value.toUpperCase())}
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-600 outline-none font-mono uppercase"
                   />
                   <div className="flex items-center justify-between">
                     <button
@@ -70,7 +70,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
                       onClick={() => setShowCustom(false)}
                       className="text-xs text-slate-500 hover:text-slate-400"
                     >
-                      ← Back to Auto Slug
+                      ← Back to Auto Code
                     </button>
                   </div>
                 </div>
@@ -80,7 +80,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
                   onClick={() => setShowCustom(true)}
                   className="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium"
                 >
-                  + Custom room slug override
+                  + Custom room code override
                 </button>
               )}
 
@@ -109,9 +109,9 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
             <form onSubmit={handleJoin} className="space-y-3">
               <input
                 type="text"
-                placeholder="Enter room slug or code (e.g. SWB-42)"
+                placeholder="Enter room code (e.g. SWB-42)"
                 value={joinInput}
-                onChange={(e) => setJoinInput(e.target.value)}
+                onChange={(e) => setJoinInput(e.target.value.toUpperCase())}
                 className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-600 outline-none font-mono uppercase"
               />
               <button

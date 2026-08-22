@@ -6,11 +6,11 @@ export function App() {
   const [currentSlug, setCurrentSlug] = useState<string | null>(() => {
     const path = window.location.pathname;
     if (path.startsWith('/r/')) {
-      return path.replace('/r/', '').trim();
+      return path.replace('/r/', '').trim().toUpperCase();
     }
     const params = new URLSearchParams(window.location.search);
     const roomParam = params.get('room');
-    if (roomParam) return roomParam.trim();
+    if (roomParam) return roomParam.trim().toUpperCase();
     return null;
   });
 
@@ -20,11 +20,11 @@ export function App() {
     const handlePopState = () => {
       const path = window.location.pathname;
       if (path.startsWith('/r/')) {
-        setCurrentSlug(path.replace('/r/', '').trim());
+        setCurrentSlug(path.replace('/r/', '').trim().toUpperCase());
       } else {
         const params = new URLSearchParams(window.location.search);
         const roomParam = params.get('room');
-        setCurrentSlug(roomParam ? roomParam.trim() : null);
+        setCurrentSlug(roomParam ? roomParam.trim().toUpperCase() : null);
       }
     };
 
@@ -33,7 +33,7 @@ export function App() {
   }, []);
 
   const navigateToRoom = (slug: string) => {
-    const cleanSlug = slug.trim().toLowerCase();
+    const cleanSlug = slug.trim().toUpperCase();
     window.history.pushState({}, '', `/r/${cleanSlug}`);
     setCurrentSlug(cleanSlug);
   };
@@ -49,12 +49,12 @@ export function App() {
           const data = await res.json();
           navigateToRoom(data.slug);
         } else {
-          const randomSlug = `swift-badger-${Math.floor(Math.random() * 90 + 10)}`;
+          const randomSlug = `SWB-${Math.floor(Math.random() * 90 + 10)}`;
           navigateToRoom(randomSlug);
         }
       }
     } catch {
-      const randomSlug = `swift-badger-${Math.floor(Math.random() * 90 + 10)}`;
+      const randomSlug = `SWB-${Math.floor(Math.random() * 90 + 10)}`;
       navigateToRoom(randomSlug);
     } finally {
       setLoading(false);

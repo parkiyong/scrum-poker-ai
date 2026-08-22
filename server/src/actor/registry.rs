@@ -15,8 +15,7 @@ pub struct RoomHandle {
 
 #[derive(Clone, Default)]
 pub struct RoomRegistry {
-    rooms_by_slug: Arc<RwLock<HashMap<String, RoomHandle>>>,
-    rooms_by_code: Arc<RwLock<HashMap<String, RoomHandle>>>,
+    rooms: Arc<RwLock<HashMap<String, RoomHandle>>>,
 }
 
 impl RoomRegistry {
@@ -25,17 +24,13 @@ impl RoomRegistry {
     }
 
     pub async fn create_room(&self) -> RoomHandle {
+        let mut rooms = self.rooms.write().await;
         let mut slug = generate_slug();
-        let mut short_code = generate_short_code(&slug);
-
-        let mut by_slug = self.rooms_by_slug.write().await;
-        let mut by_code = self.rooms_by_code.write().await;
-
-        while by_slug.contains_key(&slug) {
+        while rooms.contains_key(&slug) {
             slug = generate_slug();
-            short_code = generate_short_code(&slug);
         }
 
+        let short_code = generate_short_code(&slug);
         let (tx, rx) = mpsc::channel(64);
         let (event_tx, _) = broadcast::channel(128);
 
@@ -49,72 +44,44 @@ impl RoomRegistry {
             event_tx,
         };
 
-        by_slug.insert(slug.clone(), handle.clone());
-        by_code.insert(short_code.clone(), handle.clone());
-
+        rooms.insert(slug, handle.clone());
         handle
     }
 
     pub async fn get_or_create(&self, slug_or_code: &str) -> RoomHandle {
-        let query = slug_or_code.trim();
-        let query_upper = query.to_ascii_uppercase();
+        let query_upper = slug_or_code.trim().to_ascii_uppercase();
 
-        let by_slug = self.rooms_by_slug.read().await;
-        if let Some(h) = by_slug.get(query) {
+        let rooms = self.rooms.read().await;
+        if let Some(h) = rooms.get(&query_upper) {
             return h.clone();
         }
-        drop(by_slug);
+        drop(rooms);
 
-        let by_code = self.rooms_by_code.read().await;
-        if let Some(h) = by_code.get(&query_upper) {
-            return h.clone();
-        }
-        drop(by_code);
-
-        // If not found, create new room with this slug
-        let mut by_slug = self.rooms_by_slug.write().await;
-        let mut by_code = self.rooms_by_code.write().await;
-
-        // Double check
-        if let Some(h) = by_slug.get(query) {
+        let mut rooms = self.rooms.write().await;
+        if let Some(h) = rooms.get(&query_upper) {
             return h.clone();
         }
 
-        let short_code = generate_short_code(query);
         let (tx, rx) = mpsc::channel(64);
         let (event_tx, _) = broadcast::channel(128);
 
-        let actor = RoomActor::new(query.to_string(), short_code.clone(), event_tx.clone());
+        let actor = RoomActor::new(query_upper.clone(), query_upper.clone(), event_tx.clone());
         tokio::spawn(actor.run(rx));
 
         let handle = RoomHandle {
-            slug: query.to_string(),
-            short_code: short_code.clone(),
+            slug: query_upper.clone(),
+            short_code: query_upper.clone(),
             tx,
             event_tx,
         };
 
-        by_slug.insert(query.to_string(), handle.clone());
-        by_code.insert(short_code, handle.clone());
-
+        rooms.insert(query_upper, handle.clone());
         handle
     }
 
     pub async fn find(&self, slug_or_code: &str) -> Option<RoomHandle> {
-        let query = slug_or_code.trim();
-        let query_upper = query.to_ascii_uppercase();
-
-        let by_slug = self.rooms_by_slug.read().await;
-        if let Some(h) = by_slug.get(query) {
-            return Some(h.clone());
-        }
-        drop(by_slug);
-
-        let by_code = self.rooms_by_code.read().await;
-        if let Some(h) = by_code.get(&query_upper) {
-            return Some(h.clone());
-        }
-
-        None
+        let query_upper = slug_or_code.trim().to_ascii_uppercase();
+        let rooms = self.rooms.read().await;
+        rooms.get(&query_upper).cloned()
     }
 }

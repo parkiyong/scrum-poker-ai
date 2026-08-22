@@ -3,7 +3,7 @@ import { Participant } from '../types/room';
 
 interface HeaderProps {
   slug: string;
-  shortCode: string;
+  shortCode?: string;
   myParticipant?: Participant;
   isFacilitator: boolean;
   status: string;
@@ -12,7 +12,6 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   slug,
-  shortCode,
   myParticipant,
   isFacilitator,
   status,
@@ -37,7 +36,7 @@ export const Header: React.FC<HeaderProps> = ({
         <div>
           <div className="flex items-center gap-2">
             <h1 className="font-bold text-sm tracking-wide text-slate-200">Scrum Poker AI</h1>
-            <span className="px-2 py-0.5 text-xs bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full font-mono">
+            <span className="px-2.5 py-0.5 text-xs bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full font-mono font-bold tracking-wider">
               {slug}
             </span>
           </div>
@@ -51,7 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={handleShare}
           className="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg transition text-slate-300 flex items-center gap-1.5"
         >
-          <span>{copied ? '✓ Copied!' : `🔗 Share (${shortCode})`}</span>
+          <span>{copied ? '✓ Copied!' : `🔗 Share (${slug})`}</span>
         </button>
 
         {/* User Badge */}
@@ -66,7 +65,12 @@ export const Header: React.FC<HeaderProps> = ({
               }`}
             />
             <span className="font-medium text-slate-200">
-              {myParticipant.nickname} {isFacilitator ? '(Facilitator)' : `(${myParticipant.role})`}
+              {myParticipant.nickname}{' '}
+              {isFacilitator
+                ? myParticipant.role === 'Observer'
+                  ? '(Facilitator • Observer)'
+                  : '(Facilitator)'
+                : `(${myParticipant.role})`}
             </span>
           </button>
         ) : (
