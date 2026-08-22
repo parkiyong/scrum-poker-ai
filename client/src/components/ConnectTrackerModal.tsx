@@ -139,7 +139,7 @@ export const ConnectTrackerModal: React.FC<ConnectTrackerModalProps> = ({
     onClearFeedback();
     const config = getCurrentConfig();
     if (config) {
-      saveCreds();
+      // Do NOT save credentials here — only save after a confirmed live connection.
       onTestConnection(config);
     }
   };
