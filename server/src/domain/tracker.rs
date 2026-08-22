@@ -1,4 +1,7 @@
+use crate::domain::markdown_parser::extract_acceptance_criteria;
 use async_trait::async_trait;
+use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
+use base64::Engine as _;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -317,23 +320,6 @@ impl LinearAdapter {
             http_client: reqwest::Client::new(),
         }
     }
-
-    fn extract_acceptance_criteria(description: &str) -> Vec<String> {
-        let mut ac = Vec::new();
-        for line in description.lines() {
-            let trimmed = line.trim();
-            if let Some(rest) = trimmed.strip_prefix("- [ ] ").or_else(|| trimmed.strip_prefix("- [x] ")) {
-                if !rest.trim().is_empty() {
-                    ac.push(rest.trim().to_string());
-                }
-            } else if let Some(rest) = trimmed.strip_prefix("* [ ] ").or_else(|| trimmed.strip_prefix("* [x] ")) {
-                if !rest.trim().is_empty() {
-                    ac.push(rest.trim().to_string());
-                }
-            }
-        }
-        ac
-    }
 }
 
 #[async_trait]
@@ -505,7 +491,7 @@ impl IssueTrackerAdapter for LinearAdapter {
             let key = node.get("identifier").and_then(|v| v.as_str()).unwrap_or_default().to_string();
             let title = node.get("title").and_then(|v| v.as_str()).unwrap_or_default().to_string();
             let description = node.get("description").and_then(|v| v.as_str()).unwrap_or_default().to_string();
-            let ac = Self::extract_acceptance_criteria(&description);
+            let ac = extract_acceptance_criteria(&description);
             let url = node.get("url").and_then(|v| v.as_str()).map(|s| s.to_string());
             let current_estimate = node.get("estimate").and_then(|v| v.as_u64()).map(|n| n as u32);
             let status = node.get("state").and_then(|s| s.get("name")).and_then(|v| v.as_str()).map(|s| s.to_string());
@@ -759,7 +745,7 @@ impl IssueTrackerAdapter for GitHubAdapter {
             let title = issue.get("title").and_then(|t| t.as_str()).unwrap_or("").to_string();
             let body = issue.get("body").and_then(|b| b.as_str()).unwrap_or("").to_string();
             let html_url = issue.get("html_url").and_then(|u| u.as_str()).map(|s| s.to_string());
-            let ac = LinearAdapter::extract_acceptance_criteria(&body);
+            let ac = extract_acceptance_criteria(&body);
 
             let mut current_points = None;
             if let Some(labels) = issue.get("labels").and_then(|l| l.as_array()) {
@@ -794,7 +780,7 @@ impl IssueTrackerAdapter for GitHubAdapter {
         let label_url = format!("{}/repos/{}/{}/issues/{}/labels", self.base_url, self.owner, self.repo, issue_num);
 
         let payload = serde_json::json!({
-            "labels": [format!("points: {}", points)]
+            "labels": [format!("points:{}", points)]
         });
 
         let _ = self
@@ -923,77 +909,7 @@ impl JiraAdapter {
 
     fn auth_header(&self) -> String {
         let creds = format!("{}:{}", self.email, self.api_token);
-        format!("Basic {}", reqwest::header::HeaderValue::from_str(&data_encoding_base64(&creds)).unwrap().to_str().unwrap_or_default())
-    }
-}
-
-fn data_encoding_base64(input: &str) -> String {
-    use std::io::Write;
-    // Simple standard base64 encoding
-    let mut buf = Vec::new();
-    {
-        let mut enc = Base64Encoder::new(&mut buf);
-        let _ = enc.write_all(input.as_bytes());
-    }
-    String::from_utf8(buf).unwrap_or_default()
-}
-
-struct Base64Encoder<'a> {
-    out: &'a mut Vec<u8>,
-    buffer: [u8; 3],
-    buf_len: usize,
-}
-
-impl<'a> Base64Encoder<'a> {
-    const CHARSET: &'static [u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-    fn new(out: &'a mut Vec<u8>) -> Self {
-        Self { out, buffer: [0; 3], buf_len: 0 }
-    }
-
-    fn flush_triplet(&mut self) {
-        if self.buf_len == 0 { return; }
-        let b0 = self.buffer[0];
-        let b1 = if self.buf_len > 1 { self.buffer[1] } else { 0 };
-        let b2 = if self.buf_len > 2 { self.buffer[2] } else { 0 };
-
-        self.out.push(Self::CHARSET[(b0 >> 2) as usize]);
-        self.out.push(Self::CHARSET[(((b0 & 0x03) << 4) | (b1 >> 4)) as usize]);
-        if self.buf_len > 1 {
-            self.out.push(Self::CHARSET[(((b1 & 0x0f) << 2) | (b2 >> 6)) as usize]);
-        } else {
-            self.out.push(b'=');
-        }
-        if self.buf_len > 2 {
-            self.out.push(Self::CHARSET[(b2 & 0x3f) as usize]);
-        } else {
-            self.out.push(b'=');
-        }
-        self.buf_len = 0;
-    }
-}
-
-impl<'a> std::io::Write for Base64Encoder<'a> {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        for &byte in buf {
-            self.buffer[self.buf_len] = byte;
-            self.buf_len += 1;
-            if self.buf_len == 3 {
-                self.flush_triplet();
-            }
-        }
-        Ok(buf.len())
-    }
-
-    fn flush(&mut self) -> std::io::Result<()> {
-        self.flush_triplet();
-        Ok(())
-    }
-}
-
-impl<'a> Drop for Base64Encoder<'a> {
-    fn drop(&mut self) {
-        self.flush_triplet();
+        format!("Basic {}", BASE64_STANDARD.encode(creds.as_bytes()))
     }
 }
 

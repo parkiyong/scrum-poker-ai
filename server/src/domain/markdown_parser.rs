@@ -2,6 +2,29 @@ use crate::domain::models::Story;
 use std::collections::HashMap;
 use uuid::Uuid;
 
+/// Extracts acceptance criteria checklist items from a Markdown description.
+///
+/// Recognises both `- [ ]`/`- [x]` and `* [ ]`/`* [x]` GFM task-list syntax.
+/// This is a free function so that all tracker adapters can share it without
+/// coupling to a specific adapter implementation.
+pub fn extract_acceptance_criteria(description: &str) -> Vec<String> {
+    let mut ac = Vec::new();
+    for line in description.lines() {
+        let trimmed = line.trim();
+        if let Some(rest) = trimmed
+            .strip_prefix("- [ ] ")
+            .or_else(|| trimmed.strip_prefix("- [x] "))
+            .or_else(|| trimmed.strip_prefix("* [ ] "))
+            .or_else(|| trimmed.strip_prefix("* [x] "))
+        {
+            if !rest.trim().is_empty() {
+                ac.push(rest.trim().to_string());
+            }
+        }
+    }
+    ac
+}
+
 pub fn parse_markdown_backlog(markdown: &str) -> Vec<Story> {
     let mut stories = Vec::new();
     let mut current_title: Option<String> = None;
