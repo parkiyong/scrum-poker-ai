@@ -116,10 +116,19 @@ impl std::error::Error for TrackerError {}
 pub trait IssueTrackerAdapter: Send + Sync {
     fn provider_name(&self) -> &'static str;
     async fn test_connection(&self) -> Result<ConnectionPreview, TrackerError>;
-    async fn fetch_backlog(&self, query: &TrackerQuery) -> Result<Vec<ExternalStory>, TrackerError>;
+    async fn fetch_backlog(&self, query: &TrackerQuery)
+        -> Result<Vec<ExternalStory>, TrackerError>;
     async fn sync_estimate(&self, external_id: &str, points: u32) -> Result<(), TrackerError>;
-    async fn post_summary_comment(&self, external_id: &str, comment: &str) -> Result<(), TrackerError>;
-    async fn push_slices(&self, parent_id: &str, slices: &[StorySlice]) -> Result<Vec<ExternalStory>, TrackerError>;
+    async fn post_summary_comment(
+        &self,
+        external_id: &str,
+        comment: &str,
+    ) -> Result<(), TrackerError>;
+    async fn push_slices(
+        &self,
+        parent_id: &str,
+        slices: &[StorySlice],
+    ) -> Result<Vec<ExternalStory>, TrackerError>;
 }
 
 // -----------------------------------------------------------------------------
@@ -136,7 +145,12 @@ pub fn create_adapter(config: TrackerConfig) -> Box<dyn IssueTrackerAdapter> {
             owner,
             repo,
             endpoint,
-        } => Box::new(GitHubAdapter::new(personal_access_token, owner, repo, endpoint)),
+        } => Box::new(GitHubAdapter::new(
+            personal_access_token,
+            owner,
+            repo,
+            endpoint,
+        )),
         TrackerConfig::Jira {
             domain,
             email,
@@ -243,7 +257,10 @@ impl IssueTrackerAdapter for MockTrackerAdapter {
         })
     }
 
-    async fn fetch_backlog(&self, _query: &TrackerQuery) -> Result<Vec<ExternalStory>, TrackerError> {
+    async fn fetch_backlog(
+        &self,
+        _query: &TrackerQuery,
+    ) -> Result<Vec<ExternalStory>, TrackerError> {
         let state = self.state.lock().unwrap();
         if state.simulate_auth_failure {
             return Err(TrackerError::AuthError("Invalid token".to_string()));
@@ -263,7 +280,11 @@ impl IssueTrackerAdapter for MockTrackerAdapter {
         Ok(())
     }
 
-    async fn post_summary_comment(&self, external_id: &str, comment: &str) -> Result<(), TrackerError> {
+    async fn post_summary_comment(
+        &self,
+        external_id: &str,
+        comment: &str,
+    ) -> Result<(), TrackerError> {
         let mut state = self.state.lock().unwrap();
         state
             .comments
@@ -273,7 +294,11 @@ impl IssueTrackerAdapter for MockTrackerAdapter {
         Ok(())
     }
 
-    async fn push_slices(&self, parent_id: &str, slices: &[StorySlice]) -> Result<Vec<ExternalStory>, TrackerError> {
+    async fn push_slices(
+        &self,
+        parent_id: &str,
+        slices: &[StorySlice],
+    ) -> Result<Vec<ExternalStory>, TrackerError> {
         let mut state = self.state.lock().unwrap();
         let parent_key = state
             .stories
@@ -290,7 +315,11 @@ impl IssueTrackerAdapter for MockTrackerAdapter {
                 title: slice.title.clone(),
                 description: slice.description.clone(),
                 acceptance_criteria: slice.acceptance_criteria.clone(),
-                url: Some(format!("https://tracker.app/issue/{}-S{}", parent_key, i + 1)),
+                url: Some(format!(
+                    "https://tracker.app/issue/{}-S{}",
+                    parent_key,
+                    i + 1
+                )),
                 current_estimate: slice.estimated_points,
                 status: Some("Todo".to_string()),
             };
@@ -363,8 +392,12 @@ impl IssueTrackerAdapter for LinearAdapter {
             .await
             .map_err(|e| TrackerError::NetworkError(e.to_string()))?;
 
-        if res.status() == reqwest::StatusCode::UNAUTHORIZED || res.status() == reqwest::StatusCode::FORBIDDEN {
-            return Err(TrackerError::AuthError("Linear API Key is invalid or expired".to_string()));
+        if res.status() == reqwest::StatusCode::UNAUTHORIZED
+            || res.status() == reqwest::StatusCode::FORBIDDEN
+        {
+            return Err(TrackerError::AuthError(
+                "Linear API Key is invalid or expired".to_string(),
+            ));
         }
 
         let json: serde_json::Value = res
@@ -376,8 +409,14 @@ impl IssueTrackerAdapter for LinearAdapter {
             return Err(TrackerError::ProviderError(errors.to_string()));
         }
 
-        let data = json.get("data").ok_or_else(|| TrackerError::ProviderError("Empty data in Linear response".to_string()))?;
-        let user_name = data.get("viewer").and_then(|v| v.get("name")).and_then(|n| n.as_str()).map(|s| s.to_string());
+        let data = json.get("data").ok_or_else(|| {
+            TrackerError::ProviderError("Empty data in Linear response".to_string())
+        })?;
+        let user_name = data
+            .get("viewer")
+            .and_then(|v| v.get("name"))
+            .and_then(|n| n.as_str())
+            .map(|s| s.to_string());
 
         let teams = data
             .get("teams")
@@ -388,8 +427,15 @@ impl IssueTrackerAdapter for LinearAdapter {
                     .filter_map(|item| {
                         let id = item.get("id")?.as_str()?.to_string();
                         let name = item.get("name")?.as_str()?.to_string();
-                        let key = item.get("key").and_then(|k| k.as_str()).map(|s| s.to_string());
-                        Some(TrackerEntity { id, name, extra: key })
+                        let key = item
+                            .get("key")
+                            .and_then(|k| k.as_str())
+                            .map(|s| s.to_string());
+                        Some(TrackerEntity {
+                            id,
+                            name,
+                            extra: key,
+                        })
                     })
                     .collect()
             })
@@ -404,7 +450,11 @@ impl IssueTrackerAdapter for LinearAdapter {
                     .filter_map(|item| {
                         let id = item.get("id")?.as_str()?.to_string();
                         let name = item.get("name")?.as_str()?.to_string();
-                        Some(TrackerEntity { id, name, extra: None })
+                        Some(TrackerEntity {
+                            id,
+                            name,
+                            extra: None,
+                        })
                     })
                     .collect()
             })
@@ -422,7 +472,10 @@ impl IssueTrackerAdapter for LinearAdapter {
         })
     }
 
-    async fn fetch_backlog(&self, query: &TrackerQuery) -> Result<Vec<ExternalStory>, TrackerError> {
+    async fn fetch_backlog(
+        &self,
+        query: &TrackerQuery,
+    ) -> Result<Vec<ExternalStory>, TrackerError> {
         let gql_query = r#"
             query FetchIssues($filter: IssueFilter) {
                 issues(filter: $filter, first: 50) {
@@ -443,13 +496,22 @@ impl IssueTrackerAdapter for LinearAdapter {
 
         let mut filter = serde_json::Map::new();
         if let Some(ref team_id) = query.team_id {
-            filter.insert("team".to_string(), serde_json::json!({ "id": { "eq": team_id } }));
+            filter.insert(
+                "team".to_string(),
+                serde_json::json!({ "id": { "eq": team_id } }),
+            );
         }
         if let Some(ref cycle_id) = query.cycle_id {
-            filter.insert("cycle".to_string(), serde_json::json!({ "id": { "eq": cycle_id } }));
+            filter.insert(
+                "cycle".to_string(),
+                serde_json::json!({ "id": { "eq": cycle_id } }),
+            );
         }
         if let Some(ref project_id) = query.project_id {
-            filter.insert("project".to_string(), serde_json::json!({ "id": { "eq": project_id } }));
+            filter.insert(
+                "project".to_string(),
+                serde_json::json!({ "id": { "eq": project_id } }),
+            );
         }
 
         let payload = serde_json::json!({
@@ -487,14 +549,40 @@ impl IssueTrackerAdapter for LinearAdapter {
 
         let mut stories = Vec::new();
         for node in nodes {
-            let id = node.get("id").and_then(|v| v.as_str()).unwrap_or_default().to_string();
-            let key = node.get("identifier").and_then(|v| v.as_str()).unwrap_or_default().to_string();
-            let title = node.get("title").and_then(|v| v.as_str()).unwrap_or_default().to_string();
-            let description = node.get("description").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+            let id = node
+                .get("id")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                .to_string();
+            let key = node
+                .get("identifier")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                .to_string();
+            let title = node
+                .get("title")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                .to_string();
+            let description = node
+                .get("description")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                .to_string();
             let ac = extract_acceptance_criteria(&description);
-            let url = node.get("url").and_then(|v| v.as_str()).map(|s| s.to_string());
-            let current_estimate = node.get("estimate").and_then(|v| v.as_u64()).map(|n| n as u32);
-            let status = node.get("state").and_then(|s| s.get("name")).and_then(|v| v.as_str()).map(|s| s.to_string());
+            let url = node
+                .get("url")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
+            let current_estimate = node
+                .get("estimate")
+                .and_then(|v| v.as_u64())
+                .map(|n| n as u32);
+            let status = node
+                .get("state")
+                .and_then(|s| s.get("name"))
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
 
             stories.push(ExternalStory {
                 id,
@@ -538,13 +626,20 @@ impl IssueTrackerAdapter for LinearAdapter {
             .map_err(|e| TrackerError::NetworkError(e.to_string()))?;
 
         if !res.status().is_success() {
-            return Err(TrackerError::ProviderError(format!("Linear error status: {}", res.status())));
+            return Err(TrackerError::ProviderError(format!(
+                "Linear error status: {}",
+                res.status()
+            )));
         }
 
         Ok(())
     }
 
-    async fn post_summary_comment(&self, external_id: &str, comment: &str) -> Result<(), TrackerError> {
+    async fn post_summary_comment(
+        &self,
+        external_id: &str,
+        comment: &str,
+    ) -> Result<(), TrackerError> {
         let mutation = r#"
             mutation CreateComment($issueId: String!, $body: String!) {
                 commentCreate(input: { issueId: $issueId, body: $body }) {
@@ -573,7 +668,11 @@ impl IssueTrackerAdapter for LinearAdapter {
         Ok(())
     }
 
-    async fn push_slices(&self, parent_id: &str, slices: &[StorySlice]) -> Result<Vec<ExternalStory>, TrackerError> {
+    async fn push_slices(
+        &self,
+        parent_id: &str,
+        slices: &[StorySlice],
+    ) -> Result<Vec<ExternalStory>, TrackerError> {
         let mut created = Vec::new();
         for (i, slice) in slices.iter().enumerate() {
             let mutation = r#"
@@ -609,12 +708,21 @@ impl IssueTrackerAdapter for LinearAdapter {
                 .map_err(|e| TrackerError::NetworkError(e.to_string()))?;
 
             let json: serde_json::Value = res.json().await.unwrap_or_default();
-            let issue_node = json.get("data").and_then(|d| d.get("issueCreate")).and_then(|ic| ic.get("issue"));
+            let issue_node = json
+                .get("data")
+                .and_then(|d| d.get("issueCreate"))
+                .and_then(|ic| ic.get("issue"));
 
             let (id, key, url) = if let Some(n) = issue_node {
                 (
-                    n.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                    n.get("identifier").and_then(|v| v.as_str()).unwrap_or("").to_string(),
+                    n.get("id")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string(),
+                    n.get("identifier")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string(),
                     n.get("url").and_then(|v| v.as_str()).map(|s| s.to_string()),
                 )
             } else {
@@ -681,11 +789,18 @@ impl IssueTrackerAdapter for GitHubAdapter {
             .await
             .map_err(|e| TrackerError::NetworkError(e.to_string()))?;
 
-        if res.status() == reqwest::StatusCode::UNAUTHORIZED || res.status() == reqwest::StatusCode::FORBIDDEN {
-            return Err(TrackerError::AuthError("GitHub Personal Access Token is invalid or unauthorized".to_string()));
+        if res.status() == reqwest::StatusCode::UNAUTHORIZED
+            || res.status() == reqwest::StatusCode::FORBIDDEN
+        {
+            return Err(TrackerError::AuthError(
+                "GitHub Personal Access Token is invalid or unauthorized".to_string(),
+            ));
         }
 
-        let milestones_url = format!("{}/repos/{}/{}/milestones", self.base_url, self.owner, self.repo);
+        let milestones_url = format!(
+            "{}/repos/{}/{}/milestones",
+            self.base_url, self.owner, self.repo
+        );
         let milestones_res = self
             .http_client
             .get(&milestones_url)
@@ -695,13 +810,23 @@ impl IssueTrackerAdapter for GitHubAdapter {
             .await;
 
         let milestones = if let Ok(m_res) = milestones_res {
-            m_res.json::<Vec<serde_json::Value>>().await.map(|arr| {
-                arr.into_iter().filter_map(|m| {
-                    let id = m.get("number")?.as_i64()?.to_string();
-                    let name = m.get("title")?.as_str()?.to_string();
-                    Some(TrackerEntity { id, name, extra: None })
-                }).collect()
-            }).unwrap_or_default()
+            m_res
+                .json::<Vec<serde_json::Value>>()
+                .await
+                .map(|arr| {
+                    arr.into_iter()
+                        .filter_map(|m| {
+                            let id = m.get("number")?.as_i64()?.to_string();
+                            let name = m.get("title")?.as_str()?.to_string();
+                            Some(TrackerEntity {
+                                id,
+                                name,
+                                extra: None,
+                            })
+                        })
+                        .collect()
+                })
+                .unwrap_or_default()
         } else {
             vec![]
         };
@@ -718,8 +843,14 @@ impl IssueTrackerAdapter for GitHubAdapter {
         })
     }
 
-    async fn fetch_backlog(&self, query: &TrackerQuery) -> Result<Vec<ExternalStory>, TrackerError> {
-        let mut url = format!("{}/repos/{}/{}/issues?state=open", self.base_url, self.owner, self.repo);
+    async fn fetch_backlog(
+        &self,
+        query: &TrackerQuery,
+    ) -> Result<Vec<ExternalStory>, TrackerError> {
+        let mut url = format!(
+            "{}/repos/{}/{}/issues?state=open",
+            self.base_url, self.owner, self.repo
+        );
         if let Some(ref m) = query.milestone {
             url.push_str(&format!("&milestone={}", m));
         }
@@ -741,10 +872,25 @@ impl IssueTrackerAdapter for GitHubAdapter {
                 continue; // Skip PRs
             }
             let number = issue.get("number").and_then(|n| n.as_i64()).unwrap_or(0);
-            let id = issue.get("id").and_then(|n| n.as_i64()).map(|n| n.to_string()).unwrap_or_else(|| number.to_string());
-            let title = issue.get("title").and_then(|t| t.as_str()).unwrap_or("").to_string();
-            let body = issue.get("body").and_then(|b| b.as_str()).unwrap_or("").to_string();
-            let html_url = issue.get("html_url").and_then(|u| u.as_str()).map(|s| s.to_string());
+            let id = issue
+                .get("id")
+                .and_then(|n| n.as_i64())
+                .map(|n| n.to_string())
+                .unwrap_or_else(|| number.to_string());
+            let title = issue
+                .get("title")
+                .and_then(|t| t.as_str())
+                .unwrap_or("")
+                .to_string();
+            let body = issue
+                .get("body")
+                .and_then(|b| b.as_str())
+                .unwrap_or("")
+                .to_string();
+            let html_url = issue
+                .get("html_url")
+                .and_then(|u| u.as_str())
+                .map(|s| s.to_string());
             let ac = extract_acceptance_criteria(&body);
 
             let mut current_points = None;
@@ -777,7 +923,10 @@ impl IssueTrackerAdapter for GitHubAdapter {
 
     async fn sync_estimate(&self, external_id: &str, points: u32) -> Result<(), TrackerError> {
         let issue_num = external_id.trim_start_matches('#');
-        let label_url = format!("{}/repos/{}/{}/issues/{}/labels", self.base_url, self.owner, self.repo, issue_num);
+        let label_url = format!(
+            "{}/repos/{}/{}/issues/{}/labels",
+            self.base_url, self.owner, self.repo, issue_num
+        );
 
         let payload = serde_json::json!({
             "labels": [format!("points:{}", points)]
@@ -796,9 +945,16 @@ impl IssueTrackerAdapter for GitHubAdapter {
         Ok(())
     }
 
-    async fn post_summary_comment(&self, external_id: &str, comment: &str) -> Result<(), TrackerError> {
+    async fn post_summary_comment(
+        &self,
+        external_id: &str,
+        comment: &str,
+    ) -> Result<(), TrackerError> {
         let issue_num = external_id.trim_start_matches('#');
-        let comment_url = format!("{}/repos/{}/{}/issues/{}/comments", self.base_url, self.owner, self.repo, issue_num);
+        let comment_url = format!(
+            "{}/repos/{}/{}/issues/{}/comments",
+            self.base_url, self.owner, self.repo, issue_num
+        );
 
         let payload = serde_json::json!({
             "body": comment
@@ -817,16 +973,33 @@ impl IssueTrackerAdapter for GitHubAdapter {
         Ok(())
     }
 
-    async fn push_slices(&self, parent_id: &str, slices: &[StorySlice]) -> Result<Vec<ExternalStory>, TrackerError> {
-        let parent_ref = if parent_id.starts_with('#') { parent_id.to_string() } else { format!("#{}", parent_id) };
+    async fn push_slices(
+        &self,
+        parent_id: &str,
+        slices: &[StorySlice],
+    ) -> Result<Vec<ExternalStory>, TrackerError> {
+        let parent_ref = if parent_id.starts_with('#') {
+            parent_id.to_string()
+        } else {
+            format!("#{}", parent_id)
+        };
         let mut created = Vec::new();
 
         for slice in slices {
-            let url = format!("{}/repos/{}/{}/issues", self.base_url, self.owner, self.repo);
-            let body = format!("Parent: {}\n\n{}\n\n### Acceptance Criteria\n{}",
+            let url = format!(
+                "{}/repos/{}/{}/issues",
+                self.base_url, self.owner, self.repo
+            );
+            let body = format!(
+                "Parent: {}\n\n{}\n\n### Acceptance Criteria\n{}",
                 parent_ref,
                 slice.description,
-                slice.acceptance_criteria.iter().map(|ac| format!("- [ ] {}", ac)).collect::<Vec<_>>().join("\n")
+                slice
+                    .acceptance_criteria
+                    .iter()
+                    .map(|ac| format!("- [ ] {}", ac))
+                    .collect::<Vec<_>>()
+                    .join("\n")
             );
 
             let mut labels = vec!["sub-task".to_string()];
@@ -852,8 +1025,15 @@ impl IssueTrackerAdapter for GitHubAdapter {
 
             let json: serde_json::Value = res.json().await.unwrap_or_default();
             let number = json.get("number").and_then(|n| n.as_i64()).unwrap_or(0);
-            let id = json.get("id").and_then(|n| n.as_i64()).map(|n| n.to_string()).unwrap_or_else(|| number.to_string());
-            let html_url = json.get("html_url").and_then(|u| u.as_str()).map(|s| s.to_string());
+            let id = json
+                .get("id")
+                .and_then(|n| n.as_i64())
+                .map(|n| n.to_string())
+                .unwrap_or_else(|| number.to_string());
+            let html_url = json
+                .get("html_url")
+                .and_then(|u| u.as_str())
+                .map(|s| s.to_string());
 
             created.push(ExternalStory {
                 id,
@@ -894,7 +1074,8 @@ impl JiraAdapter {
         endpoint: Option<String>,
         points_field: Option<String>,
     ) -> Self {
-        let base_url = endpoint.unwrap_or_else(|| format!("https://{}.atlassian.net/rest/api/3", domain));
+        let base_url =
+            endpoint.unwrap_or_else(|| format!("https://{}.atlassian.net/rest/api/3", domain));
         let points_field = points_field.unwrap_or_else(|| "customfield_10016".to_string());
         Self {
             domain,
@@ -929,12 +1110,19 @@ impl IssueTrackerAdapter for JiraAdapter {
             .await
             .map_err(|e| TrackerError::NetworkError(e.to_string()))?;
 
-        if res.status() == reqwest::StatusCode::UNAUTHORIZED || res.status() == reqwest::StatusCode::FORBIDDEN {
-            return Err(TrackerError::AuthError("Jira API Token or email is invalid".to_string()));
+        if res.status() == reqwest::StatusCode::UNAUTHORIZED
+            || res.status() == reqwest::StatusCode::FORBIDDEN
+        {
+            return Err(TrackerError::AuthError(
+                "Jira API Token or email is invalid".to_string(),
+            ));
         }
 
         let user_json: serde_json::Value = res.json().await.unwrap_or_default();
-        let display_name = user_json.get("displayName").and_then(|n| n.as_str()).map(|s| s.to_string());
+        let display_name = user_json
+            .get("displayName")
+            .and_then(|n| n.as_str())
+            .map(|s| s.to_string());
 
         Ok(ConnectionPreview {
             provider: TrackerProvider::Jira,
@@ -952,9 +1140,15 @@ impl IssueTrackerAdapter for JiraAdapter {
         })
     }
 
-    async fn fetch_backlog(&self, query: &TrackerQuery) -> Result<Vec<ExternalStory>, TrackerError> {
+    async fn fetch_backlog(
+        &self,
+        query: &TrackerQuery,
+    ) -> Result<Vec<ExternalStory>, TrackerError> {
         let jql = query.jql.clone().unwrap_or_else(|| {
-            format!("project = \"{}\" AND statusCategory != Done ORDER BY created DESC", self.project_key)
+            format!(
+                "project = \"{}\" AND statusCategory != Done ORDER BY created DESC",
+                self.project_key
+            )
         });
 
         let url = format!("{}/search", self.base_url);
@@ -974,17 +1168,43 @@ impl IssueTrackerAdapter for JiraAdapter {
             .map_err(|e| TrackerError::NetworkError(e.to_string()))?;
 
         let json: serde_json::Value = res.json().await.unwrap_or_default();
-        let issues = json.get("issues").and_then(|i| i.as_array()).cloned().unwrap_or_default();
+        let issues = json
+            .get("issues")
+            .and_then(|i| i.as_array())
+            .cloned()
+            .unwrap_or_default();
 
         let mut stories = Vec::new();
         for issue in issues {
-            let id = issue.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string();
-            let key = issue.get("key").and_then(|v| v.as_str()).unwrap_or("").to_string();
+            let id = issue
+                .get("id")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            let key = issue
+                .get("key")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
             let fields = issue.get("fields");
-            let title = fields.and_then(|f| f.get("summary")).and_then(|s| s.as_str()).unwrap_or("").to_string();
-            let status = fields.and_then(|f| f.get("status")).and_then(|s| s.get("name")).and_then(|n| n.as_str()).map(|s| s.to_string());
-            let current_estimate = fields.and_then(|f| f.get(&self.points_field)).and_then(|p| p.as_f64()).map(|n| n as u32);
-            let url = Some(format!("https://{}.atlassian.net/browse/{}", self.domain, key));
+            let title = fields
+                .and_then(|f| f.get("summary"))
+                .and_then(|s| s.as_str())
+                .unwrap_or("")
+                .to_string();
+            let status = fields
+                .and_then(|f| f.get("status"))
+                .and_then(|s| s.get("name"))
+                .and_then(|n| n.as_str())
+                .map(|s| s.to_string());
+            let current_estimate = fields
+                .and_then(|f| f.get(&self.points_field))
+                .and_then(|p| p.as_f64())
+                .map(|n| n as u32);
+            let url = Some(format!(
+                "https://{}.atlassian.net/browse/{}",
+                self.domain, key
+            ));
 
             stories.push(ExternalStory {
                 id,
@@ -1021,7 +1241,11 @@ impl IssueTrackerAdapter for JiraAdapter {
         Ok(())
     }
 
-    async fn post_summary_comment(&self, external_id: &str, comment: &str) -> Result<(), TrackerError> {
+    async fn post_summary_comment(
+        &self,
+        external_id: &str,
+        comment: &str,
+    ) -> Result<(), TrackerError> {
         let url = format!("{}/issue/{}/comment", self.base_url, external_id);
         let payload = serde_json::json!({
             "body": {
@@ -1053,7 +1277,11 @@ impl IssueTrackerAdapter for JiraAdapter {
         Ok(())
     }
 
-    async fn push_slices(&self, parent_id: &str, slices: &[StorySlice]) -> Result<Vec<ExternalStory>, TrackerError> {
+    async fn push_slices(
+        &self,
+        parent_id: &str,
+        slices: &[StorySlice],
+    ) -> Result<Vec<ExternalStory>, TrackerError> {
         let mut created = Vec::new();
         for slice in slices {
             let url = format!("{}/issue", self.base_url);
@@ -1065,7 +1293,10 @@ impl IssueTrackerAdapter for JiraAdapter {
             });
 
             if let Some(pts) = slice.estimated_points {
-                fields.as_object_mut().unwrap().insert(self.points_field.clone(), serde_json::json!(pts));
+                fields
+                    .as_object_mut()
+                    .unwrap()
+                    .insert(self.points_field.clone(), serde_json::json!(pts));
             }
 
             let payload = serde_json::json!({ "fields": fields });
@@ -1079,9 +1310,20 @@ impl IssueTrackerAdapter for JiraAdapter {
                 .map_err(|e| TrackerError::NetworkError(e.to_string()))?;
 
             let json: serde_json::Value = res.json().await.unwrap_or_default();
-            let id = json.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string();
-            let key = json.get("key").and_then(|v| v.as_str()).unwrap_or("").to_string();
-            let url = Some(format!("https://{}.atlassian.net/browse/{}", self.domain, key));
+            let id = json
+                .get("id")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            let key = json
+                .get("key")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            let url = Some(format!(
+                "https://{}.atlassian.net/browse/{}",
+                self.domain, key
+            ));
 
             created.push(ExternalStory {
                 id,

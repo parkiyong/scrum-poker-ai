@@ -59,8 +59,15 @@ pub fn parse_markdown_backlog(markdown: &str) -> Vec<Story> {
         let trimmed = line.trim();
 
         // Check for Story header (# Title or ## Title)
-        if (trimmed.starts_with("# ") || trimmed.starts_with("## ")) && !trimmed.to_lowercase().contains("acceptance criteria") {
-            flush_current(&mut stories, &mut current_title, &mut current_desc_lines, &mut current_ac);
+        if (trimmed.starts_with("# ") || trimmed.starts_with("## "))
+            && !trimmed.to_lowercase().contains("acceptance criteria")
+        {
+            flush_current(
+                &mut stories,
+                &mut current_title,
+                &mut current_desc_lines,
+                &mut current_ac,
+            );
             let header_text = if let Some(stripped) = trimmed.strip_prefix("## ") {
                 stripped.trim()
             } else if let Some(stripped) = trimmed.strip_prefix("# ") {
@@ -86,14 +93,20 @@ pub fn parse_markdown_backlog(markdown: &str) -> Vec<Story> {
         }
 
         // If currently in a story, collect description lines (skip the "### Acceptance Criteria" line itself)
-        if current_title.is_some() {
-            if !trimmed.starts_with("### Acceptance") && !trimmed.starts_with("## Acceptance") {
-                current_desc_lines.push(line.to_string());
-            }
+        if current_title.is_some()
+            && !trimmed.starts_with("### Acceptance")
+            && !trimmed.starts_with("## Acceptance")
+        {
+            current_desc_lines.push(line.to_string());
         }
     }
 
-    flush_current(&mut stories, &mut current_title, &mut current_desc_lines, &mut current_ac);
+    flush_current(
+        &mut stories,
+        &mut current_title,
+        &mut current_desc_lines,
+        &mut current_ac,
+    );
 
     // If no header markdown found but input is non-empty, treat entire input as single story
     if stories.is_empty() && !markdown.trim().is_empty() {
@@ -126,7 +139,10 @@ pub fn export_markdown_summary(stories: &[Story], notes: &HashMap<String, String
     for story in stories {
         let key = story.key.as_deref().unwrap_or("-");
         let points = story.points.as_deref().unwrap_or("?");
-        let note = notes.get(&story.id).cloned().unwrap_or_else(|| "-".to_string());
+        let note = notes
+            .get(&story.id)
+            .cloned()
+            .unwrap_or_else(|| "-".to_string());
         let title_clean = story.title.replace('|', "\\|");
         let note_clean = note.replace('|', "\\|");
 

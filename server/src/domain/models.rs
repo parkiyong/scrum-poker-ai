@@ -39,7 +39,12 @@ pub struct Story {
 }
 
 impl Story {
-    pub fn new(id: impl Into<String>, title: impl Into<String>, description: impl Into<String>, acceptance_criteria: Vec<String>) -> Self {
+    pub fn new(
+        id: impl Into<String>,
+        title: impl Into<String>,
+        description: impl Into<String>,
+        acceptance_criteria: Vec<String>,
+    ) -> Self {
         Self {
             id: id.into(),
             title: title.into(),
@@ -135,7 +140,7 @@ impl RoomState {
         }
 
         let mut sorted_counts: Vec<(&String, usize)> = counts.into_iter().collect();
-        sorted_counts.sort_by(|a, b| b.1.cmp(&a.1));
+        sorted_counts.sort_by_key(|a| std::cmp::Reverse(a.1));
 
         let (top_vote, top_count) = sorted_counts[0];
         let consensus_pct = (top_count as f64 / total_votes as f64) * 100.0;

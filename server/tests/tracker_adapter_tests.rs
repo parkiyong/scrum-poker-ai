@@ -17,7 +17,10 @@ async fn test_mock_tracker_adapter_lifecycle() {
         status: Some("In Progress".to_string()),
     });
 
-    let preview = mock.test_connection().await.expect("test connection failed");
+    let preview = mock
+        .test_connection()
+        .await
+        .expect("test connection failed");
     assert!(preview.authenticated);
     assert_eq!(preview.provider, TrackerProvider::Linear);
 
@@ -37,7 +40,9 @@ async fn test_mock_tracker_adapter_lifecycle() {
     assert_eq!(stories[0].acceptance_criteria.len(), 2);
 
     // Sync estimate
-    mock.sync_estimate("lin-1", 5).await.expect("sync estimate failed");
+    mock.sync_estimate("lin-1", 5)
+        .await
+        .expect("sync estimate failed");
     assert_eq!(mock.get_recorded_estimate("lin-1"), Some(5));
 
     // Post comment
@@ -64,7 +69,10 @@ async fn test_mock_tracker_adapter_lifecycle() {
         },
     ];
 
-    let created_slices = mock.push_slices("lin-1", &slices).await.expect("push slices failed");
+    let created_slices = mock
+        .push_slices("lin-1", &slices)
+        .await
+        .expect("push slices failed");
     assert_eq!(created_slices.len(), 2);
     assert_eq!(created_slices[0].key, "ENG-101-S1");
     assert_eq!(created_slices[1].key, "ENG-101-S2");

@@ -1,6 +1,4 @@
-use crate::domain::models::{
-    ConsensusSummary, EstimationPhase, Role, RoomState, Story,
-};
+use crate::domain::models::{ConsensusSummary, EstimationPhase, Role, RoomState, Story};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -90,7 +88,7 @@ pub fn project_room_state(state: &RoomState, viewer_id: Option<&str>) -> RoomSta
         })
         .collect();
 
-    participants.sort_by(|a, b| a.nickname.to_lowercase().cmp(&b.nickname.to_lowercase()));
+    participants.sort_by_key(|a| a.nickname.to_lowercase());
 
     let tracker_connected = state.active_tracker_provider.is_some();
 

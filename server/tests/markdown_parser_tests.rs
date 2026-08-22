@@ -19,11 +19,22 @@ Build the user profile page allowing users to update their avatar and bio.
     let stories = parse_markdown_backlog(md);
     assert_eq!(stories.len(), 1);
     assert_eq!(stories[0].title, "ENG-101: User Profile Page");
-    assert!(stories[0].description.contains("Build the user profile page"));
+    assert!(stories[0]
+        .description
+        .contains("Build the user profile page"));
     assert_eq!(stories[0].acceptance_criteria.len(), 3);
-    assert_eq!(stories[0].acceptance_criteria[0], "User can upload avatar PNG/JPG");
-    assert_eq!(stories[0].acceptance_criteria[1], "User can edit display name and bio");
-    assert_eq!(stories[0].acceptance_criteria[2], "Profile changes persist across sessions");
+    assert_eq!(
+        stories[0].acceptance_criteria[0],
+        "User can upload avatar PNG/JPG"
+    );
+    assert_eq!(
+        stories[0].acceptance_criteria[1],
+        "User can edit display name and bio"
+    );
+    assert_eq!(
+        stories[0].acceptance_criteria[2],
+        "Profile changes persist across sessions"
+    );
 }
 
 #[test]
@@ -88,5 +99,6 @@ fn test_export_markdown_and_csv_summaries() {
 
     let csv_summary = export_csv_summary(&stories);
     assert!(csv_summary.starts_with("Key,Title,Points,Status,URL\n"));
-    assert!(csv_summary.contains("ENG-101,\"JWT Authentication\",5,Estimated,https://linear.app/team/ENG-101"));
+    assert!(csv_summary
+        .contains("ENG-101,\"JWT Authentication\",5,Estimated,https://linear.app/team/ENG-101"));
 }

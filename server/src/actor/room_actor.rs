@@ -9,6 +9,7 @@ use tracing::info;
 use uuid::Uuid;
 
 #[derive(Debug)]
+#[allow(clippy::large_enum_variant)]
 pub enum RoomCommand {
     ClientMsg {
         participant_id: String,
@@ -84,7 +85,8 @@ impl RoomActor {
                 avatar,
                 role,
             } => {
-                let is_first = self.state.participants.is_empty() || self.state.facilitator_id.is_empty();
+                let is_first =
+                    self.state.participants.is_empty() || self.state.facilitator_id.is_empty();
                 if is_first {
                     self.state.facilitator_id = participant_id.clone();
                 }
@@ -106,7 +108,10 @@ impl RoomActor {
                     let new_p = Participant {
                         id: participant_id.clone(),
                         nickname: if nickname.trim().is_empty() {
-                            format!("Estimator-{}", &participant_id[..participant_id.len().min(4)])
+                            format!(
+                                "Estimator-{}",
+                                &participant_id[..participant_id.len().min(4)]
+                            )
                         } else {
                             nickname.clone()
                         },
@@ -120,7 +125,9 @@ impl RoomActor {
                         voted: false,
                         vote: None,
                     };
-                    self.state.participants.insert(participant_id.clone(), new_p.clone());
+                    self.state
+                        .participants
+                        .insert(participant_id.clone(), new_p.clone());
                     new_p
                 };
 
@@ -169,9 +176,9 @@ impl RoomActor {
                         let _ = self.event_tx.send(ServerEvent::TrackerConnected {
                             provider: prov_name,
                         });
-                        let _ = self.event_tx.send(ServerEvent::TrackerConnectionTested {
-                            preview,
-                        });
+                        let _ = self
+                            .event_tx
+                            .send(ServerEvent::TrackerConnectionTested { preview });
                         self.broadcast_snapshot();
                     }
                     Err(err) => {
@@ -195,9 +202,9 @@ impl RoomActor {
                 let adapter = create_adapter(config);
                 match adapter.test_connection().await {
                     Ok(preview) => {
-                        let _ = self.event_tx.send(ServerEvent::TrackerConnectionTested {
-                            preview,
-                        });
+                        let _ = self
+                            .event_tx
+                            .send(ServerEvent::TrackerConnectionTested { preview });
                     }
                     Err(err) => {
                         let _ = self.event_tx.send(ServerEvent::TrackerError {
@@ -216,7 +223,8 @@ impl RoomActor {
                             for ext in ext_stories {
                                 if !self.state.backlog.iter().any(|s| {
                                     s.external_id.as_deref() == Some(&ext.id)
-                                        || (s.key.as_deref() == Some(&ext.key) && !ext.key.is_empty())
+                                        || (s.key.as_deref() == Some(&ext.key)
+                                            && !ext.key.is_empty())
                                 }) {
                                     self.state.backlog.push(Story {
                                         id: format!("story-{}", Uuid::new_v4()),
@@ -292,17 +300,21 @@ impl RoomActor {
                         active.points = Some(points.to_string());
                         active.status = Some("Estimated".to_string());
                         if target_ext_id.is_none() {
-                            target_ext_id = active.external_id.clone().or_else(|| active.key.clone());
+                            target_ext_id =
+                                active.external_id.clone().or_else(|| active.key.clone());
                         }
                         target_story_id = active.id.clone();
                     }
                 }
 
-                if let (Some(ref adapter), Some(ext_id)) = (&self.tracker_adapter, target_ext_id.as_deref()) {
+                if let (Some(ref adapter), Some(ext_id)) =
+                    (&self.tracker_adapter, target_ext_id.as_deref())
+                {
                     match adapter.sync_estimate(ext_id, points).await {
                         Ok(()) => {
                             if post_comment {
-                                let comment = format!("⚡ Scrum Poker Consensus: {} story points.", points);
+                                let comment =
+                                    format!("⚡ Scrum Poker Consensus: {} story points.", points);
                                 let _ = adapter.post_summary_comment(ext_id, &comment).await;
                             }
 
@@ -419,7 +431,9 @@ impl RoomActor {
             }
 
             ClientCommand::RemoveStoryFromBacklog { story_id } => {
-                self.state.backlog.retain(|s| s.id != story_id && s.key.as_deref() != Some(&story_id));
+                self.state
+                    .backlog
+                    .retain(|s| s.id != story_id && s.key.as_deref() != Some(&story_id));
                 let _ = self.event_tx.send(ServerEvent::BacklogUpdated {
                     backlog: self.state.backlog.clone(),
                 });

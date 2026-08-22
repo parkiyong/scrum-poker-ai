@@ -74,6 +74,7 @@ pub enum ClientCommand {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(clippy::large_enum_variant)]
 #[serde(tag = "type", content = "payload")]
 pub enum ServerEvent {
     RoomSnapshot {
@@ -141,4 +142,3 @@ pub enum ServerEvent {
     },
     Pong,
 }
-

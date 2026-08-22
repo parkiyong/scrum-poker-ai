@@ -97,6 +97,13 @@ export const ConnectTrackerModal: React.FC<ConnectTrackerModalProps> = ({
     }
   };
 
+  // Save credentials to sessionStorage ONLY after connection authentication is confirmed live
+  useEffect(() => {
+    if (activeProvider || connectionPreview?.authenticated) {
+      saveCreds();
+    }
+  }, [activeProvider, connectionPreview?.authenticated]);
+
   if (!isOpen) return null;
 
   const getCurrentConfig = (): TrackerConfig | null => {
@@ -148,7 +155,7 @@ export const ConnectTrackerModal: React.FC<ConnectTrackerModalProps> = ({
     onClearFeedback();
     const config = getCurrentConfig();
     if (config) {
-      saveCreds();
+      // Credentials will be saved by useEffect once connection is verified live
       onConnect(config);
 
       const query: TrackerQuery = {};

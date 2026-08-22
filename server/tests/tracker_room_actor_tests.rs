@@ -21,8 +21,12 @@ async fn test_facilitator_tracker_connect_and_backlog_flow() {
         status: Some("In Progress".to_string()),
     });
 
-    let actor = RoomActor::new("swift-badger-42".to_string(), "SWB-42".to_string(), event_tx)
-        .with_tracker_adapter(Box::new((*mock_adapter).clone()));
+    let actor = RoomActor::new(
+        "swift-badger-42".to_string(),
+        "SWB-42".to_string(),
+        event_tx,
+    )
+    .with_tracker_adapter(Box::new((*mock_adapter).clone()));
     tokio::spawn(actor.run(rx));
 
     // 1. Facilitator joins
@@ -75,7 +79,9 @@ async fn test_facilitator_tracker_connect_and_backlog_flow() {
     let (select_tx, select_rx) = tokio::sync::oneshot::channel();
     tx.send(RoomCommand::ClientMsg {
         participant_id: "fac-1".to_string(),
-        command: ClientCommand::SelectStoryById { story_id: story_id.clone() },
+        command: ClientCommand::SelectStoryById {
+            story_id: story_id.clone(),
+        },
         reply: Some(select_tx),
     })
     .await
@@ -91,7 +97,10 @@ async fn test_facilitator_tracker_connect_and_backlog_flow() {
     .await
     .unwrap();
     let snap2 = snap_rx2.await.unwrap();
-    assert_eq!(snap2.active_story.as_ref().unwrap().key, Some("ENG-101".to_string()));
+    assert_eq!(
+        snap2.active_story.as_ref().unwrap().key,
+        Some("ENG-101".to_string())
+    );
 
     // 5. Start voting, cast vote, reveal, finalize
     let (start_tx, start_rx) = tokio::sync::oneshot::channel();
@@ -107,7 +116,9 @@ async fn test_facilitator_tracker_connect_and_backlog_flow() {
     let (vote_tx, vote_rx) = tokio::sync::oneshot::channel();
     tx.send(RoomCommand::ClientMsg {
         participant_id: "fac-1".to_string(),
-        command: ClientCommand::CastVote { value: "5".to_string() },
+        command: ClientCommand::CastVote {
+            value: "5".to_string(),
+        },
         reply: Some(vote_tx),
     })
     .await
@@ -127,7 +138,9 @@ async fn test_facilitator_tracker_connect_and_backlog_flow() {
     let (fin_tx, fin_rx) = tokio::sync::oneshot::channel();
     tx.send(RoomCommand::ClientMsg {
         participant_id: "fac-1".to_string(),
-        command: ClientCommand::FinalizeStory { points: Some("5".to_string()) },
+        command: ClientCommand::FinalizeStory {
+            points: Some("5".to_string()),
+        },
         reply: Some(fin_tx),
     })
     .await
@@ -202,7 +215,11 @@ async fn test_facilitator_tracker_connect_and_backlog_flow() {
 async fn test_markdown_paste_ingestion_and_reordering() {
     let (tx, rx) = mpsc::channel(64);
     let (event_tx, _event_rx) = tokio::sync::broadcast::channel(64);
-    let actor = RoomActor::new("swift-badger-42".to_string(), "SWB-42".to_string(), event_tx);
+    let actor = RoomActor::new(
+        "swift-badger-42".to_string(),
+        "SWB-42".to_string(),
+        event_tx,
+    );
     tokio::spawn(actor.run(rx));
 
     // Facilitator joins
@@ -286,9 +303,7 @@ Improve responsive layout.
     let (rem_tx, rem_rx) = tokio::sync::oneshot::channel();
     tx.send(RoomCommand::ClientMsg {
         participant_id: "fac-1".to_string(),
-        command: ClientCommand::RemoveStoryFromBacklog {
-            story_id: id_a,
-        },
+        command: ClientCommand::RemoveStoryFromBacklog { story_id: id_a },
         reply: Some(rem_tx),
     })
     .await
