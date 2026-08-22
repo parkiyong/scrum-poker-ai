@@ -7,7 +7,7 @@ COPY client/ ./
 RUN npm run build
 
 # 2. Build server binary
-FROM rust:1.80-slim AS server-builder
+FROM rust:1-slim AS server-builder
 WORKDIR /app
 RUN apt-get update && apt-get install -y pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
 COPY Cargo.toml Cargo.lock ./
