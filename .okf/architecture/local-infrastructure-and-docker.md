@@ -27,7 +27,7 @@ sources:
 
 # Local Infrastructure & Docker Architecture
 
-Scrum Poker AI standardizes its local development infrastructure and deployment artifact through Docker and Docker Compose.
+Scrum Pokr AI standardizes its local development infrastructure and deployment artifact through Docker and Docker Compose.
 
 ## Container Topology
 

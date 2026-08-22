@@ -20,7 +20,7 @@ sources:
 
 # Zero-Auth Session Recovery
 
-Scrum Poker AI requires zero passwords, emails, or OAuth redirects. Instead, it combines client-side UUID generation with ephemeral room actor state.
+Scrum Pokr AI requires zero passwords, emails, or OAuth redirects. Instead, it combines client-side UUID generation with ephemeral room actor state.
 
 ## Mechanism
 

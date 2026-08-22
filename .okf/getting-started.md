@@ -1,7 +1,7 @@
 ---
 type: Concept
-title: Getting Started with Scrum Poker AI
-description: Overview and navigational entrypoint for the Scrum Poker AI platform knowledge base.
+title: Getting Started with Scrum Pokr AI
+description: Overview and navigational entrypoint for the Scrum Pokr AI platform knowledge base.
 tags:
   - getting-started
   - overview
@@ -13,15 +13,15 @@ status: stable
 sources:
   - id: readme
     resource: /README.md
-    title: Scrum Poker AI Readme
+    title: Scrum Pokr AI Readme
   - id: spec
     resource: /.scratch/scrum-poker/spec.md
-    title: Scrum Poker AI System Specification
+    title: Scrum Pokr AI System Specification
 ---
 
-# Getting Started with Scrum Poker AI
+# Getting Started with Scrum Pokr AI
 
-**Scrum Poker AI** is a real-time, zero-auth Planning Poker platform crafted for high-velocity software engineering teams. It eliminates cognitive friction, signup overhead, and peer anchoring bias while delivering sub-millisecond real-time state synchronization.
+**Scrum Pokr AI** is a real-time, zero-auth Planning Poker platform crafted for high-velocity software engineering teams. It eliminates cognitive friction, signup overhead, and peer anchoring bias while delivering sub-millisecond real-time state synchronization.
 
 ## Core Architectural Highlights
 

@@ -1,6 +1,6 @@
-# Contributing to Scrum Poker AI
+# Contributing to Scrum Pokr AI
 
-> Development workflows, coding standards, issue tracker conventions, and pull request procedures for **Scrum Poker AI**.
+> Development workflows, coding standards, issue tracker conventions, and pull request procedures for **Scrum Pokr AI**.
 
 📖 [User Guide](USER_GUIDE.md) · 🛠️ [Developer Guide](DEVELOPER_GUIDE.md) · 🤝 [Contributing](CONTRIBUTING.md) · 🧠 [OKF Knowledge Bundle](.okf/index.md) · 🌐 [Product Spec](.scratch/scrum-poker/spec.md)
 

@@ -11,7 +11,7 @@
 
 ## Reporting a Vulnerability
 
-We take the security and privacy of Scrum Poker AI seriously. If you discover a security vulnerability, please report it responsibly rather than opening a public issue.
+We take the security and privacy of Scrum Pokr AI seriously. If you discover a security vulnerability, please report it responsibly rather than opening a public issue.
 
 ### Reporting Process
 1. Email your findings to **security@scrum-poker.app** (or submit a private security advisory via GitHub Security Advisories).
@@ -24,7 +24,7 @@ We take the security and privacy of Scrum Poker AI seriously. If you discover a 
 ## Security Model & Core Invariants
 
 ### 1. Server-Enforced Reveal Gate (Anti-Anchoring Protection)
-The primary security and fairness invariant of Scrum Poker AI is the **Server Reveal Gate**:
+The primary security and fairness invariant of Scrum Pokr AI is the **Server Reveal Gate**:
 * While a room is in the `Voting` phase, submitted votes and AI baseline predictions must **never** traverse the network.
 * The server projects state through `RoomStatePublicVoting` and serializes peer estimates solely as `has_voted: bool`.
 * Any flaw that exposes unmasked votes or AI predictions prior to the `Revealed` state is treated as a **High Priority Security Defect**.

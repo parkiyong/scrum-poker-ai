@@ -1,4 +1,4 @@
-# Scrum Poker AI — User Guide
+# Scrum Pokr AI — User Guide
 
 > A real-time, zero-auth Planning Poker estimation platform designed for agile teams, featuring a high-performance **Rust (Tokio / Axum)** backend, **React 18 + TypeScript + Tailwind CSS** frontend, and a **server-enforced reveal gate** that eliminates anchoring bias.
 

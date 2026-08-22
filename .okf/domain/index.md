@@ -1,6 +1,6 @@
 # Domain Concepts
 
-This section covers the core business models and rules of the Scrum Poker AI platform.
+This section covers the core business models and rules of the Scrum Pokr AI platform.
 
 ## Concepts
 

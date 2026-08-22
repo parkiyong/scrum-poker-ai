@@ -36,7 +36,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
             🃏
           </div>
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white">
-            Scrum Poker <span className="text-indigo-400">AI</span>
+            Scrum Pokr <span className="text-indigo-400">AI</span>
           </h1>
           <p className="text-sm text-slate-400 max-w-sm mx-auto">
             Zero-auth, real-time Planning Poker with server-enforced reveal gates and AI estimation advisory.

@@ -22,7 +22,7 @@ sources:
 
 # Participant Roles & Permissions
 
-Scrum Poker AI decouples **Room Authority** from **Participation Mode**:
+Scrum Pokr AI decouples **Room Authority** from **Participation Mode**:
 
 ## Role Taxonomy
 

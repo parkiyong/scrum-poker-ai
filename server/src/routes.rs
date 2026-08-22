@@ -61,7 +61,7 @@ pub async fn validate_room(
 pub async fn health_check() -> Json<HealthResponse> {
     Json(HealthResponse {
         status: "ok",
-        service: "scrum-poker-ai-server",
+        service: "scrum-pokr-ai-server",
     })
 }
 

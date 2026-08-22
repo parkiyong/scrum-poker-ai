@@ -1,6 +1,6 @@
 # Architectural Decision Records (ADRs)
 
-This section records significant architectural decisions, trade-offs, and design rationales for Scrum Poker AI.
+This section records significant architectural decisions, trade-offs, and design rationales for Scrum Pokr AI.
 
 ## Decisions
 

@@ -1,6 +1,6 @@
-# Scrum Poker AI — Developer Guide
+# Scrum Pokr AI — Developer Guide
 
-> Operational guide for setting up, running, testing, and developing **Scrum Poker AI**.
+> Operational guide for setting up, running, testing, and developing **Scrum Pokr AI**.
 
 📖 [User Guide](USER_GUIDE.md) · 🛠️ [Developer Guide](DEVELOPER_GUIDE.md) · 🤝 [Contributing](CONTRIBUTING.md) · 🧠 [OKF Knowledge Bundle](.okf/index.md) · 🌐 [Product Spec](.scratch/scrum-poker/spec.md)
 
@@ -21,35 +21,20 @@
 
 * **Rust**: `1.80+` (`rustup default stable`)
 * **Node.js**: `v20+` & `npm`
-* **Docker & Docker Compose**: For local PostgreSQL + `pgvector` container management
+* **Docker & Docker Compose**: For containerized deployment
 
 ---
 
 ## 2. Local Environment Setup
 
-### 2.1 Clone & Environment Variables
+### 2.1 Clone Repository
 
 ```bash
 git clone https://github.com/parkiyong/scrum-poker-ai.git
 cd scrum-poke-ai
-
-# Copy environment variable template
-cp .env.example .env
 ```
 
-### 2.2 Start Database via Docker Compose
-
-```bash
-docker compose up -d db
-```
-This launches a PostgreSQL 16 container with `pgvector` pre-configured on port `5432` (`DATABASE_URL=postgres://postgres:postgres@localhost:5432/scrum_poker`).
-
-To check container health:
-```bash
-docker compose ps
-```
-
-### 2.3 Install Client Dependencies
+### 2.2 Install Client Dependencies
 
 ```bash
 cd client
@@ -89,10 +74,10 @@ cargo run --bin server
 ```
 * **Unified Web App**: [http://localhost:3000](http://localhost:3000)
 
-### Option C: Full Containerized Stack
+### Option C: Containerized Stack (Docker)
 
 ```bash
-docker compose --profile full up --build
+docker compose up --build
 ```
 * **Unified Web App in Docker**: [http://localhost:3000](http://localhost:3000)
 

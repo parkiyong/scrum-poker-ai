@@ -1,40 +1,13 @@
 services:
-  db:
-    image: pgvector/pgvector:pg16
-    container_name: scrum_poker_db
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-scrum_poker}
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-scrum_poker}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: scrum_poker_app
+    container_name: scrum_pokr_app
     restart: unless-stopped
     ports:
       - "${PORT:-3000}:3000"
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-scrum_poker}
       - PORT=3000
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
-    depends_on:
-      db:
-        condition: service_healthy
-    profiles:
-      - full
 
-volumes:
-  postgres_data:
-    driver: local

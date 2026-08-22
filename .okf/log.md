@@ -2,7 +2,7 @@
 
 ## 2026-08-22
 
-- Initialized OKF v0.2 bundle for Scrum Poker AI.
+- Initialized OKF v0.2 bundle for Scrum Pokr AI.
 - Documented core architecture (`tokio-in-memory-actor-model`, `multi-room-registry`, `react-arena-client`).
 - Documented domain model (`estimation-phases`, `participant-roles`, `room-identifiers`, `consensus-and-spread`).
 - Documented security invariants (`server-enforced-reveal-gate`, `zero-auth-session-recovery`).

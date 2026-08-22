@@ -1,4 +1,4 @@
-# Scrum Poker AI
+# Scrum Pokr AI
 
 A real-time, zero-auth, standalone Scrum Poker estimation platform with a Rust backend and an advisory AI layer for backlog refinement, divergence analysis, and team calibration.
 

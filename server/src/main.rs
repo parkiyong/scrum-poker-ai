@@ -30,7 +30,7 @@ async fn main() {
         .unwrap_or(3000);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    info!("🃏 Scrum Poker AI server starting on http://{}", addr);
+    info!("🃏 Scrum Pokr AI server starting on http://{}", addr);
 
     let listener = tokio::net::TcpListener::bind(addr)
         .await

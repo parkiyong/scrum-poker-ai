@@ -1,4 +1,4 @@
-# 🃏 Scrum Poker AI
+# 🃏 Scrum Pokr AI
 
 > A real-time, zero-auth Planning Poker estimation platform featuring a high-performance **Rust (Tokio / Axum)** backend, **React 18 + TypeScript + Tailwind CSS** frontend, and a **server-enforced reveal gate** that eliminates cognitive anchoring bias.
 
@@ -51,18 +51,17 @@
 ### Prerequisites
 * **Rust**: `1.80+` (`cargo`)
 * **Node.js**: `v20+` & `npm`
-* **Docker & Docker Compose** (for PostgreSQL + `pgvector`)
+* **Docker & Docker Compose**
 
-### 1. Database Setup (Docker Compose)
+### Running the Application
 
-Start the PostgreSQL + `pgvector` container for local development:
+#### Option A: Containerized App (Recommended for Quick Start)
 ```bash
-docker compose up -d db
+docker compose up --build
 ```
+Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 
-### 2. Run the Application
-
-#### Option A: Development Mode (Vite Hot-Reload)
+#### Option B: Development Mode (Vite Hot-Reload)
 ```bash
 # Terminal 1: Backend WebSocket & REST server
 cargo run --bin server
@@ -72,19 +71,13 @@ cd client && npm run dev
 ```
 Open **[http://localhost:5173](http://localhost:5173)** in your browser.
 
-#### Option B: Standalone Mode (Single Binary)
+#### Option C: Standalone Binary Mode
 ```bash
 # 1. Build the React client bundle
 cd client && npm run build && cd ..
 
 # 2. Start the Rust server
 cargo run --bin server
-```
-Open **[http://localhost:3000](http://localhost:3000)** in your browser.
-
-#### Option C: Full Containerized Stack (Docker)
-```bash
-docker compose --profile full up --build
 ```
 Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 

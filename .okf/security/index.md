@@ -1,6 +1,6 @@
 # Security & Privacy Concepts
 
-This section covers the security and privacy mechanisms enforced by Scrum Poker AI.
+This section covers the security and privacy mechanisms enforced by Scrum Pokr AI.
 
 ## Concepts
 

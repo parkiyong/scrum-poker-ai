@@ -35,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({
         </a>
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="font-bold text-sm tracking-wide text-slate-200">Scrum Poker AI</h1>
+            <h1 className="font-bold text-sm tracking-wide text-slate-200">Scrum Pokr AI</h1>
             <span className="px-2.5 py-0.5 text-xs bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full font-mono font-bold tracking-wider">
               {slug}
             </span>

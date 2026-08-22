@@ -23,7 +23,7 @@ sources:
 
 # Room Identifiers & Addressing
 
-To eliminate cognitive friction and URL routing mismatch, Scrum Poker AI standardizes on a single canonical identifier format: **6-character uppercase alphanumeric codes**.
+To eliminate cognitive friction and URL routing mismatch, Scrum Pokr AI standardizes on a single canonical identifier format: **6-character uppercase alphanumeric codes**.
 
 ## Code Structure
 

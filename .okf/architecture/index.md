@@ -1,6 +1,6 @@
 # Architecture Concepts
 
-This section covers the core backend and frontend architecture of Scrum Poker AI.
+This section covers the core backend and frontend architecture of Scrum Pokr AI.
 
 ## Concepts
 

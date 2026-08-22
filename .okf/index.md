@@ -2,9 +2,9 @@
 okf_version: "0.2"
 ---
 
-# Scrum Poker AI Knowledge Bundle
+# Scrum Pokr AI Knowledge Bundle
 
-Welcome to the **Scrum Poker AI** Open Knowledge Format (OKF) bundle. This repository captures the architectural patterns, domain concepts, security invariants, protocol specifications, and architectural decision records for the Scrum Poker AI platform.
+Welcome to the **Scrum Pokr AI** Open Knowledge Format (OKF) bundle. This repository captures the architectural patterns, domain concepts, security invariants, protocol specifications, and architectural decision records for the Scrum Pokr AI platform.
 
 ## Sections
 
