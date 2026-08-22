@@ -3,7 +3,6 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Role {
-    Facilitator,
     Estimator,
     Observer,
 }
@@ -87,7 +86,7 @@ impl RoomState {
         let valid_votes: Vec<&String> = self
             .participants
             .values()
-            .filter(|p| (p.role == Role::Estimator || p.id == self.facilitator_id) && p.voted)
+            .filter(|p| p.role == Role::Estimator && p.voted)
             .filter_map(|p| p.vote.as_ref())
             .filter(|v| *v != "?")
             .collect();
@@ -108,7 +107,6 @@ impl RoomState {
         let (top_vote, top_count) = sorted_counts[0];
         let consensus_pct = (top_count as f64 / total_votes as f64) * 100.0;
 
-        // Numeric evaluation for spread
         let mut numeric_votes: Vec<f64> = valid_votes
             .iter()
             .filter_map(|v| v.parse::<f64>().ok())

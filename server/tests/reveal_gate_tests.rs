@@ -11,7 +11,7 @@ fn test_reveal_gate_masks_votes_during_voting_phase() {
             id: "p1".to_string(),
             nickname: "Alex".to_string(),
             avatar: "indigo".to_string(),
-            role: Role::Facilitator,
+            role: Role::Estimator,
             connected: true,
             voted: true,
             vote: Some("5".to_string()),
@@ -35,7 +35,7 @@ fn test_reveal_gate_masks_votes_during_voting_phase() {
             id: "p3".to_string(),
             nickname: "Marcus".to_string(),
             avatar: "slate".to_string(),
-            role: Role::Estimator,
+            role: Role::Observer,
             connected: true,
             voted: false,
             vote: None,
@@ -57,8 +57,6 @@ fn test_reveal_gate_masks_votes_during_voting_phase() {
         facilitator_id: "p1".to_string(),
     };
 
-    // When viewing as participant p1 during Voting:
-    // Own vote is visible, peer votes are masked to None even though peer has voted!
     let projection_for_p1 = project_room_state(&room_state, Some("p1"));
     match projection_for_p1 {
         RoomStateProjection::Voting(v) => {
@@ -88,7 +86,7 @@ fn test_reveal_gate_exposes_all_votes_during_revealed_phase() {
             id: "p1".to_string(),
             nickname: "Alex".to_string(),
             avatar: "indigo".to_string(),
-            role: Role::Facilitator,
+            role: Role::Estimator,
             connected: true,
             voted: true,
             vote: Some("5".to_string()),

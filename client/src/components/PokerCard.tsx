@@ -4,6 +4,7 @@ import { Participant } from '../types/room';
 interface PokerCardProps {
   participant: Participant;
   isSelf: boolean;
+  isFacilitator: boolean;
   phase: string;
   isConsensus?: boolean;
   isOutlier?: boolean;
@@ -12,6 +13,7 @@ interface PokerCardProps {
 export const PokerCard: React.FC<PokerCardProps> = ({
   participant,
   isSelf,
+  isFacilitator,
   phase,
   isConsensus,
   isOutlier,
@@ -20,7 +22,6 @@ export const PokerCard: React.FC<PokerCardProps> = ({
   const hasVote = participant.vote !== undefined && participant.vote !== null;
   const isFlipped = isRevealed && hasVote;
 
-  // Colors mapping for avatar
   const avatarColors: Record<string, string> = {
     indigo: 'from-indigo-600 to-indigo-700 ring-indigo-500/50',
     emerald: 'from-emerald-600 to-emerald-700 ring-emerald-500/50',
@@ -104,7 +105,7 @@ export const PokerCard: React.FC<PokerCardProps> = ({
         <span className="text-xs font-medium text-slate-300 truncate">
           {participant.nickname} {isSelf && '(You)'}
         </span>
-        {participant.role === 'Facilitator' && (
+        {isFacilitator && (
           <span title="Facilitator" className="text-[10px] text-amber-400">
             👑
           </span>

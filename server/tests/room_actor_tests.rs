@@ -18,7 +18,7 @@ async fn test_room_lifecycle_and_state_machine() {
             participant_id: "p1".to_string(),
             nickname: "Alex".to_string(),
             avatar: "indigo".to_string(),
-            role: None, // First joiner should become Facilitator
+            role: None, // Default Estimator role, becomes Facilitator authority
         },
         reply: Some(reply_tx),
     })
@@ -26,7 +26,7 @@ async fn test_room_lifecycle_and_state_machine() {
     .unwrap();
 
     let res = reply_rx.await.unwrap().unwrap();
-    assert_eq!(res.role, Role::Facilitator);
+    assert_eq!(res.role, Role::Estimator);
 
     // 2. Second participant joins (Estimator)
     let (reply_tx2, reply_rx2) = tokio::sync::oneshot::channel();
@@ -36,7 +36,7 @@ async fn test_room_lifecycle_and_state_machine() {
             participant_id: "p2".to_string(),
             nickname: "Sarah".to_string(),
             avatar: "emerald".to_string(),
-            role: None, // Second joiner becomes Estimator
+            role: None,
         },
         reply: Some(reply_tx2),
     })
@@ -111,9 +111,111 @@ async fn test_room_lifecycle_and_state_machine() {
 
     let snapshot = snap_rx.await.unwrap();
     assert_eq!(snapshot.phase, EstimationPhase::Revealed);
+    assert_eq!(snapshot.facilitator_id, "p1");
     assert_eq!(snapshot.participants.len(), 2);
     let p1_proj = snapshot.participants.iter().find(|p| p.id == "p1").unwrap();
     assert_eq!(p1_proj.vote, Some("5".to_string()));
+}
+
+#[tokio::test]
+async fn test_observer_facilitator_cannot_vote_and_is_excluded_from_consensus() {
+    let (tx, rx) = mpsc::channel(32);
+    let (event_tx, _event_rx) = tokio::sync::broadcast::channel(32);
+    let actor = RoomActor::new("swift-badger-42".to_string(), "SWB-42".to_string(), event_tx);
+    tokio::spawn(actor.run(rx));
+
+    // Facilitator joins explicitly as Observer
+    let (reply_tx, reply_rx) = tokio::sync::oneshot::channel();
+    tx.send(RoomCommand::ClientMsg {
+        participant_id: "fac-observer".to_string(),
+        command: ClientCommand::JoinRoom {
+            participant_id: "fac-observer".to_string(),
+            nickname: "Scrum Master".to_string(),
+            avatar: "indigo".to_string(),
+            role: Some(Role::Observer),
+        },
+        reply: Some(reply_tx),
+    })
+    .await
+    .unwrap();
+
+    let res = reply_rx.await.unwrap().unwrap();
+    assert_eq!(res.role, Role::Observer);
+
+    // Estimator joins
+    let (reply_tx2, reply_rx2) = tokio::sync::oneshot::channel();
+    tx.send(RoomCommand::ClientMsg {
+        participant_id: "dev-1".to_string(),
+        command: ClientCommand::JoinRoom {
+            participant_id: "dev-1".to_string(),
+            nickname: "Dev 1".to_string(),
+            avatar: "emerald".to_string(),
+            role: Some(Role::Estimator),
+        },
+        reply: Some(reply_tx2),
+    })
+    .await
+    .unwrap();
+    let _ = reply_rx2.await.unwrap();
+
+    // Start voting
+    tx.send(RoomCommand::ClientMsg {
+        participant_id: "fac-observer".to_string(),
+        command: ClientCommand::StartVoting,
+        reply: None,
+    })
+    .await
+    .unwrap();
+
+    // Observer tries to vote -> Should be rejected
+    let (vote_tx, vote_rx) = tokio::sync::oneshot::channel();
+    tx.send(RoomCommand::ClientMsg {
+        participant_id: "fac-observer".to_string(),
+        command: ClientCommand::CastVote {
+            value: "5".to_string(),
+        },
+        reply: Some(vote_tx),
+    })
+    .await
+    .unwrap();
+
+    let vote_err = vote_rx.await.unwrap();
+    assert!(vote_err.is_err(), "Observer voting must be rejected by backend");
+
+    // Dev 1 votes 8
+    tx.send(RoomCommand::ClientMsg {
+        participant_id: "dev-1".to_string(),
+        command: ClientCommand::CastVote {
+            value: "8".to_string(),
+        },
+        reply: None,
+    })
+    .await
+    .unwrap();
+
+    // Reveal cards
+    tx.send(RoomCommand::ClientMsg {
+        participant_id: "fac-observer".to_string(),
+        command: ClientCommand::RevealCards,
+        reply: None,
+    })
+    .await
+    .unwrap();
+
+    // Check consensus: should be 100% consensus on 8 because Observer is excluded from quorum
+    let (snap_tx, snap_rx) = tokio::sync::oneshot::channel();
+    tx.send(RoomCommand::GetSnapshot {
+        participant_id: "fac-observer".to_string(),
+        reply: snap_tx,
+    })
+    .await
+    .unwrap();
+
+    let snap = snap_rx.await.unwrap();
+    let consensus = snap.consensus.unwrap();
+    assert_eq!(consensus.total_votes, 1);
+    assert_eq!(consensus.suggested_points, Some("8".to_string()));
+    assert_eq!(consensus.consensus_pct, 100.0);
 }
 
 #[tokio::test]
@@ -254,6 +356,4 @@ async fn test_facilitator_failover_promotion() {
 
     let snap = snap_rx.await.unwrap();
     assert_eq!(snap.facilitator_id, "est-2");
-    let p = snap.participants.iter().find(|p| p.id == "est-2").unwrap();
-    assert_eq!(p.role, Role::Facilitator);
 }

@@ -19,7 +19,7 @@ describe('session utils', () => {
       participant_id: 'test-uuid-1',
       nickname: 'Alex',
       avatar: 'indigo',
-      role: 'Facilitator',
+      role: 'Estimator',
     };
 
     saveStoredProfile('swift-badger-42', profile);

@@ -74,14 +74,16 @@ impl RoomActor {
                 role,
             } => {
                 let is_first = self.state.participants.is_empty() || self.state.facilitator_id.is_empty();
-                let assigned_role = if is_first {
-                    Role::Facilitator
-                } else {
-                    role.unwrap_or(Role::Estimator)
-                };
+                if is_first {
+                    self.state.facilitator_id = participant_id.clone();
+                }
+                let assigned_role = role.unwrap_or(Role::Estimator);
 
                 let p = if let Some(existing) = self.state.participants.get_mut(&participant_id) {
                     existing.connected = true;
+                    if let Some(r) = role {
+                        existing.role = r;
+                    }
                     if !nickname.trim().is_empty() {
                         existing.nickname = nickname.clone();
                     }
@@ -107,9 +109,6 @@ impl RoomActor {
                         voted: false,
                         vote: None,
                     };
-                    if is_first {
-                        self.state.facilitator_id = participant_id.clone();
-                    }
                     self.state.participants.insert(participant_id.clone(), new_p.clone());
                     new_p
                 };
@@ -142,6 +141,9 @@ impl RoomActor {
 
             ClientCommand::CastVote { value } => {
                 let p_clone = if let Some(p) = self.state.participants.get_mut(sender_id) {
+                    if p.role == Role::Observer {
+                        return Err("Observers cannot cast votes".to_string());
+                    }
                     p.voted = true;
                     p.vote = Some(value);
                     Some(p.clone())
@@ -239,6 +241,10 @@ impl RoomActor {
             } => {
                 if let Some(target) = self.state.participants.get_mut(&target_id) {
                     target.role = new_role;
+                    if new_role == Role::Observer {
+                        target.voted = false;
+                        target.vote = None;
+                    }
                     let _ = self.event_tx.send(ServerEvent::RoleUpdated {
                         participant_id: target_id.clone(),
                         role: new_role,
@@ -253,9 +259,6 @@ impl RoomActor {
             ClientCommand::TransferFacilitator { target_id } => {
                 if self.state.participants.contains_key(&target_id) {
                     self.state.facilitator_id = target_id.clone();
-                    if let Some(p) = self.state.participants.get_mut(&target_id) {
-                        p.role = Role::Facilitator;
-                    }
                     let _ = self.event_tx.send(ServerEvent::FacilitatorChanged {
                         facilitator_id: target_id,
                     });
@@ -292,9 +295,6 @@ impl RoomActor {
                 if let Some(new_id) = next_facilitator {
                     info!("Promoting participant {} to Facilitator", new_id);
                     self.state.facilitator_id = new_id.clone();
-                    if let Some(new_fac) = self.state.participants.get_mut(&new_id) {
-                        new_fac.role = Role::Facilitator;
-                    }
                     let _ = self.event_tx.send(ServerEvent::FacilitatorChanged {
                         facilitator_id: new_id,
                     });

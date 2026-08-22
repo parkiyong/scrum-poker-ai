@@ -19,6 +19,7 @@ describe('PokerCard component', () => {
       <PokerCard
         participant={participantVoted}
         isSelf={false}
+        isFacilitator={false}
         phase="Voting"
       />
     );
@@ -32,6 +33,7 @@ describe('PokerCard component', () => {
       <PokerCard
         participant={participantVoted}
         isSelf={false}
+        isFacilitator={false}
         phase="Revealed"
         isConsensus={true}
       />

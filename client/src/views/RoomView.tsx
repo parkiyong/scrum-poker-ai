@@ -119,6 +119,7 @@ export const RoomView: React.FC<RoomViewProps> = ({ slug, onLeave: _onLeave }) =
           <PokerTableArena
             participants={participants}
             currentUserId={currentParticipantId}
+            facilitatorId={roomState?.facilitator_id}
             phase={phase}
             roundNumber={roundNumber}
             consensus={consensus}

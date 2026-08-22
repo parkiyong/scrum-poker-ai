@@ -5,6 +5,7 @@ import { PokerCard } from './PokerCard';
 interface PokerTableArenaProps {
   participants: Participant[];
   currentUserId: string;
+  facilitatorId?: string;
   phase: EstimationPhase;
   roundNumber: number;
   consensus?: ConsensusSummary | null;
@@ -13,13 +14,14 @@ interface PokerTableArenaProps {
 export const PokerTableArena: React.FC<PokerTableArenaProps> = ({
   participants,
   currentUserId,
+  facilitatorId,
   phase,
   roundNumber,
   consensus,
 }) => {
   const isRevealed = phase === 'Revealed' || phase === 'Finalized' || phase === 'Discussing' || phase === 'Slicing';
-  const votedCount = participants.filter((p) => p.voted).length;
-  const totalEstimators = participants.filter((p) => p.role !== 'Observer').length;
+  const votedCount = participants.filter((p) => p.role === 'Estimator' && p.voted).length;
+  const totalEstimators = participants.filter((p) => p.role === 'Estimator').length;
 
   return (
     <div className="relative w-full max-w-4xl mx-auto flex flex-col items-center py-6">
@@ -98,6 +100,7 @@ export const PokerTableArena: React.FC<PokerTableArenaProps> = ({
         <div className="absolute inset-0 p-4 sm:p-6 flex flex-wrap items-center justify-around pointer-events-none">
           {participants.map((p) => {
             const isSelf = p.id === currentUserId;
+            const isFacilitator = p.id === facilitatorId;
             const isConsensus =
               isRevealed &&
               consensus?.suggested_points !== undefined &&
@@ -114,6 +117,7 @@ export const PokerTableArena: React.FC<PokerTableArenaProps> = ({
                 <PokerCard
                   participant={p}
                   isSelf={isSelf}
+                  isFacilitator={isFacilitator}
                   phase={phase}
                   isConsensus={isConsensus}
                   isOutlier={isOutlier}
