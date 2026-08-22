@@ -1,7 +1,8 @@
 # Unified Issue Tracker Integration & 2-Way Sync (Linear, GitHub, Jira)
 
 Type: research
-Status: resolved
+Status: closed
+Superseded by: .okf/decisions/ADR-005-unified-issue-tracker-sync.md
 Blocked by: 01
 
 ## Question

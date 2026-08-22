@@ -2,6 +2,8 @@
 type: Architectural Decision Record
 title: "ADR-005: Unified Issue Tracker Integration & 2-Way Sync"
 description: Architectural design for multi-provider issue tracker integration (Linear, GitHub, Jira) with zero-auth ephemeral token handling and 2-way writeback.
+status: stable
+supersedes: ".scratch/scrum-poker/decisions/03-linear-sync-contract.md"
 tags:
   - decision
   - adr
@@ -13,16 +15,17 @@ tags:
 generated:
   by: antigravity/2.0
   at: "2026-08-22T19:58:00Z"
-status: stable
 sources:
   - id: tracker-sync
     resource: /.scratch/scrum-poker/decisions/03-linear-sync-contract.md
-    title: Unified Issue Tracker Integration Decision
+    title: "Unified Issue Tracker Integration Decision (superseded)"
 ---
 
 # ADR-005: Unified Issue Tracker Integration & 2-Way Sync
 
 ## Context
+
+> **Supersedes:** [`.scratch/scrum-poker/decisions/03-linear-sync-contract.md`](../../.scratch/scrum-poker/decisions/03-linear-sync-contract.md) — that decision recorded the Linear integration as out-of-scope pending further research. This ADR formally reverses that decision and establishes the unified adapter architecture.
 
 Scrum Poker teams use diverse external issue trackers (Linear, GitHub Issues, Jira Cloud) to manage their product backlogs. Manually copying and pasting stories into the estimation arena or typing story points back into external systems causes friction and human error. However, Scrum Pokr AI is designed around a **zero-auth model** without persistent user accounts or stored secrets.
 
